@@ -38,8 +38,8 @@ do_new_install() {
     discover_modules
 
     # 4. Service selection
-    local selected
-    selected=$(show_service_selector) || { log_error "Service selection cancelled."; return 1; }
+    show_service_selector || { log_error "Service selection cancelled."; return 1; }
+    local selected="$SELECTED_SERVICES"
 
     if [ -z "$selected" ]; then
         whiptail_msgbox "No Selection" "No services were selected. Returning to main menu."
@@ -47,7 +47,8 @@ do_new_install() {
     fi
 
     # 5. Resolve dependencies
-    selected=$(resolve_dependencies "$selected")
+    resolve_dependencies "$selected"
+    selected="$RESOLVED_SERVICES"
 
     # 6. Prompt for service-specific config
     prompt_service_config "$selected"
@@ -169,15 +170,16 @@ do_reconfigure() {
     discover_modules
 
     # Show service selector with currently installed services pre-checked
-    local selected
-    selected=$(show_service_selector "$INSTALLED_SERVICES") || { log_error "Reconfiguration cancelled."; return 1; }
+    show_service_selector "$INSTALLED_SERVICES" || { log_error "Reconfiguration cancelled."; return 1; }
+    local selected="$SELECTED_SERVICES"
 
     if [ -z "$selected" ]; then
         whiptail_msgbox "No Selection" "No services were selected. Returning to main menu."
         return 1
     fi
 
-    selected=$(resolve_dependencies "$selected")
+    resolve_dependencies "$selected"
+    selected="$RESOLVED_SERVICES"
 
     # Determine added and removed services
     local added="" removed=""
