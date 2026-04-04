@@ -54,8 +54,11 @@ discover_modules() {
 # Service Selection UI
 # ========================================
 
+# Sets global SELECTED_SERVICES variable (not stdout) to avoid subshell issues
+# with associative arrays. Caller must NOT use $(...) to capture output.
 show_service_selector() {
     local preselected="${1:-}"
+    SELECTED_SERVICES=""
     local checklist_args=()
 
     # Add "SELECT ALL" as first option
@@ -72,9 +75,6 @@ show_service_selector() {
         done
         $has_items || continue
 
-        # Add category separator
-        checklist_args+=("---" "── $category ──" "OFF")
-
         # Add modules in this category
         for mod in "${ALL_MODULES[@]}"; do
             if [ "${MODULE_CAT[$mod]}" = "$category" ]; then
@@ -86,7 +86,7 @@ show_service_selector() {
                 if [ -n "${MODULE_PORT[$mod]:-}" ]; then
                     port_info=" :${MODULE_PORT[$mod]}"
                 fi
-                checklist_args+=("$mod" "${MODULE_DESC[$mod]}${port_info}" "$status")
+                checklist_args+=("$mod" "[${category}] ${MODULE_DESC[$mod]}${port_info}" "$status")
             fi
         done
     done
@@ -107,32 +107,31 @@ show_service_selector() {
         done
     fi
 
-    # Remove separator entries
-    selected=$(echo "$selected" | sed 's/---//g' | xargs)
-
-    echo "$selected"
+    SELECTED_SERVICES=$(echo "$selected" | xargs)
 }
 
 # ========================================
 # Dependency Resolution
 # ========================================
 
+# Sets global RESOLVED_SERVICES variable (not stdout) to avoid subshell issues
+# with associative arrays. Caller must NOT use $(...) to capture output.
 resolve_dependencies() {
     local selected="$1"
-    local resolved="$selected"
+    RESOLVED_SERVICES="$selected"
     local changed=true
 
     while $changed; do
         changed=false
-        for mod in $resolved; do
+        for mod in $RESOLVED_SERVICES; do
             local deps="${MODULE_DEPS[$mod]:-}"
             [ -z "$deps" ] || [ "$deps" = "(none)" ] && continue
 
             IFS=',' read -ra dep_array <<< "$deps"
             for dep in "${dep_array[@]}"; do
                 dep=$(echo "$dep" | xargs) # trim whitespace
-                if ! echo "$resolved" | grep -qw "$dep"; then
-                    resolved+=" $dep"
+                if ! echo "$RESOLVED_SERVICES" | grep -qw "$dep"; then
+                    RESOLVED_SERVICES+=" $dep"
                     changed=true
                     log_info "Auto-added '$dep' (required by '$mod')"
                 fi
@@ -141,11 +140,9 @@ resolve_dependencies() {
     done
 
     # Soft dependency warnings
-    if echo "$resolved" | grep -qw "tautulli" && ! echo "$resolved" | grep -qw "plex"; then
+    if echo "$RESOLVED_SERVICES" | grep -qw "tautulli" && ! echo "$RESOLVED_SERVICES" | grep -qw "plex"; then
         log_warn "Tautulli is selected but Plex is not. Tautulli requires Plex to function."
     fi
-
-    echo "$resolved"
 }
 
 # ========================================
