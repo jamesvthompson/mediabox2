@@ -1,0 +1,23 @@
+# module: couchpotato
+# description: CouchPotato - Movie downloader (legacy)
+# category: Content Automation
+# depends: (none)
+# config_requires:
+# port: 5050
+
+services:
+  couchpotato:
+    image: lscr.io/linuxserver/couchpotato
+    container_name: couchpotato
+    restart: unless-stopped
+    network_mode: "bridge"
+    ports:
+      - '${IP_ADDRESS}:5050:5050'
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+    volumes:
+      - './couchpotato:/config'
+      - '${DLDIR}/completed:/downloads'
+      - '${MOVIEDIR}:/movies'
+      - '/etc/localtime:/etc/localtime:ro'

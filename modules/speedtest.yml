@@ -1,0 +1,22 @@
+# module: speedtest
+# description: Speedtest - Network speed tracker
+# category: System & Monitoring
+# depends: (none)
+# config_requires:
+# port: 8765
+
+services:
+  speedtest:
+    image: henrywhitaker3/speedtest-tracker:dev
+    container_name: speedtest
+    restart: unless-stopped
+    network_mode: "bridge"
+    ports:
+      - '${IP_ADDRESS}:8765:80'
+    environment:
+      - TZ=${TZ}
+      - PGID=${PGID}
+      - PUID=${PUID}
+      - OOKLA_EULA_GDPR=true
+    volumes:
+      - './speedtest:/config'

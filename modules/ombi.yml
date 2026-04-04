@@ -1,0 +1,21 @@
+# module: ombi
+# description: Ombi - Media request system
+# category: Request Management
+# depends: (none)
+# config_requires:
+# port: 3579
+
+services:
+  ombi:
+    image: lscr.io/linuxserver/ombi
+    container_name: ombi
+    restart: unless-stopped
+    network_mode: "bridge"
+    ports:
+      - '${IP_ADDRESS}:3579:3579'
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+    volumes:
+      - './ombi:/config'
+      - '/etc/localtime:/etc/localtime:ro'

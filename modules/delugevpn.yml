@@ -1,0 +1,41 @@
+# module: delugevpn
+# description: DelugeVPN - Torrent client with VPN
+# category: Download Clients
+# depends: (none)
+# config_requires: PIAUNAME,PIAPASS,VPN_REMOTE
+# port: 8112
+
+services:
+  arch-delugevpn:
+    image: binhex/arch-delugevpn
+    container_name: delugevpn
+    restart: unless-stopped
+    network_mode: "bridge"
+    ports:
+      - '${IP_ADDRESS}:8112:8112'
+      - '${IP_ADDRESS}:8118:8118'
+      - '${IP_ADDRESS}:58846:58846'
+      - '${IP_ADDRESS}:58946:58946'
+    cap_add:
+      - NET_ADMIN
+    environment:
+      - VPN_ENABLED=yes
+      - VPN_USER=${PIAUNAME}
+      - VPN_PASS=${PIAPASS}
+      - VPN_REMOTE=${VPN_REMOTE}
+      - VPN_PORT=1198
+      - VPN_PROTOCOL=udp
+      - VPN_DEVICE_TYPE=tun
+      - VPN_PROV=pia
+      - STRONG_CERTS=no
+      - ENABLE_PRIVOXY=yes
+      - STRICT_PORT_FORWARD=yes
+      - LAN_NETWORK=${CIDR_ADDRESS}
+      - NAME_SERVERS=84.200.69.80,37.235.1.174,1.1.1.1,37.235.1.177,84.200.70.40,1.0.0.1
+      - DEBUG=false
+      - PUID=${PUID}
+      - PGID=${PGID}
+    volumes:
+      - '${DLDIR}:/data'
+      - './delugevpn/config:/config'
+      - '/etc/localtime:/etc/localtime:ro'

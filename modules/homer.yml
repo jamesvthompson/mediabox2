@@ -1,0 +1,20 @@
+# module: homer
+# description: Homer - Dashboard
+# category: Utilities
+# depends: (none)
+# config_requires:
+# port: 80
+
+services:
+  homer:
+    image: b4bz/homer:latest
+    container_name: homer
+    restart: unless-stopped
+    network_mode: "bridge"
+    ports:
+      - '${IP_ADDRESS}:80:8080'
+    environment:
+      - UID=${PUID}
+      - GID=${PGID}
+    volumes:
+      - './homer:/www/assets'

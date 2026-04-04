@@ -1,0 +1,22 @@
+# module: sqlitebrowser
+# description: SQLite Browser - Database viewer
+# category: Utilities
+# depends: (none)
+# config_requires:
+# port: 3000
+
+services:
+  sqlitebrowser:
+    image: lscr.io/linuxserver/sqlitebrowser
+    container_name: sqlitebrowser
+    restart: unless-stopped
+    network_mode: "bridge"
+    ports:
+      - '${IP_ADDRESS}:3000:3000'
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - './sqlitebrowser:/config'
+      - '${PWD}:/config/mediabox'

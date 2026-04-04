@@ -1,0 +1,22 @@
+# module: emby
+# description: Emby - Media server
+# category: Media Servers
+# depends: (none)
+# config_requires:
+# port: 8696
+
+services:
+  emby:
+    image: lscr.io/linuxserver/emby:latest
+    container_name: emby
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - './emby:/config'
+      - '${TVDIR}:/data/tvshows'
+      - '${MOVIEDIR}:/data/movies'
+    ports:
+      - '${IP_ADDRESS}:8696:8096'
