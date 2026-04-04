@@ -1,0 +1,24 @@
+# module: portainer
+# description: Portainer - Docker management UI
+# category: System & Monitoring
+# depends: (none)
+# config_requires:
+# port: 9443
+
+services:
+  portainer:
+    image: portainer/portainer-ce
+    container_name: portainer
+    restart: unless-stopped
+    network_mode: "bridge"
+    ports:
+      - '${IP_ADDRESS}:8000:8000'
+      - '${IP_ADDRESS}:9443:9443'
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+    volumes:
+      - './portainer:/data'
+      - '/var/run/docker.sock:/var/run/docker.sock'
+      - '/etc/localtime:/etc/localtime:ro'
+    command: -H unix:///var/run/docker.sock

@@ -1,0 +1,35 @@
+# module: tdarr
+# description: Tdarr - Transcoding orchestrator
+# category: Media Processing
+# depends: (none)
+# config_requires:
+# port: 8265
+
+services:
+  tdarr:
+    image: haveagitgat/tdarr:latest
+    container_name: tdarr
+    restart: unless-stopped
+    network_mode: "bridge"
+    ports:
+      - '${IP_ADDRESS}:8265:8265'
+      - '${IP_ADDRESS}:8266:8266'
+      - '${IP_ADDRESS}:8267:8267'
+    environment:
+      - TZ=${TZ}
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - UMASK_SET=002
+      - serverIP=${IP_ADDRESS}
+      - serverPort=8266
+      - webUIPort=8265
+    volumes:
+      - './tdarr/server:/app/server'
+      - './tdarr/configs:/app/configs'
+      - './tdarr/logs:/app/logs'
+      - './tdarr/transcode_cache:/temp'
+      - '${MISCDIR}:/data/misc'
+      - '${MOVIEDIR}:/data/movies'
+      - '${MUSICDIR}:/data/music'
+      - '${TVDIR}:/data/tvshows'
+      - '/etc/localtime:/etc/localtime:ro'

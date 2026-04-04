@@ -1,0 +1,23 @@
+# module: jellyfin
+# description: Jellyfin - Free media system
+# category: Media Servers
+# depends: (none)
+# config_requires:
+# port: 8096
+
+services:
+  jellyfin:
+    image: jellyfin/jellyfin
+    container_name: jellyfin
+    restart: unless-stopped
+    network_mode: "bridge"
+    user: "${PUID}:${PGID}"
+    ports:
+      - '${IP_ADDRESS}:8096:8096'
+    volumes:
+      - './jellyfin:/config'
+      - '${MISCDIR}:/media/misc'
+      - '${MOVIEDIR}:/media/movies'
+      - '${MUSICDIR}:/media/music'
+      - '${TVDIR}:/media/tv'
+      - '/etc/localtime:/etc/localtime:ro'

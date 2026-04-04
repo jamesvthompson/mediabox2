@@ -1,0 +1,21 @@
+# module: filebrowser
+# description: FileBrowser - Web file manager
+# category: Utilities
+# depends: (none)
+# config_requires:
+# port: 8008
+
+services:
+  filebrowser:
+    image: hurlenko/filebrowser
+    container_name: filebrowser
+    restart: unless-stopped
+    network_mode: "bridge"
+    user: "${PUID}:${PGID}"
+    ports:
+      - '${IP_ADDRESS}:8008:8080'
+    environment:
+      - FB_BASEURL=/filebrowser
+    volumes:
+      - './filebrowser:/config'
+      - '${PWD}:/data/mediabox'

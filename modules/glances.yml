@@ -1,0 +1,24 @@
+# module: glances
+# description: Glances - Real-time monitoring
+# category: System & Monitoring
+# depends: (none)
+# config_requires:
+# port: 61208
+
+services:
+  glances:
+    image: nicolargo/glances:latest-full
+    container_name: glances
+    restart: unless-stopped
+    network_mode: "bridge"
+    pid: host
+    ports:
+      - '${IP_ADDRESS}:61208:61208'
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - GLANCES_OPT=-w
+    volumes:
+      - './glances:/config'
+      - '/var/run/docker.sock:/var/run/docker.sock:ro'

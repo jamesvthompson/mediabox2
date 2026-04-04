@@ -1,0 +1,22 @@
+# module: jackett
+# description: Jackett - Torrent indexer proxy
+# category: Indexers
+# depends: (none)
+# config_requires:
+# port: 9117
+
+services:
+  jackett:
+    image: lscr.io/linuxserver/jackett
+    container_name: jackett
+    restart: unless-stopped
+    network_mode: "bridge"
+    ports:
+      - '${IP_ADDRESS}:9117:9117'
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+    volumes:
+      - './jackett:/config'
+      - '${DLDIR}/completed:/downloads'
+      - '/etc/localtime:/etc/localtime:ro'

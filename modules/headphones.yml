@@ -1,0 +1,23 @@
+# module: headphones
+# description: Headphones - Music downloader
+# category: Content Automation
+# depends: (none)
+# config_requires:
+# port: 8282
+
+services:
+  headphones:
+    image: lscr.io/linuxserver/headphones
+    container_name: headphones
+    restart: unless-stopped
+    network_mode: "bridge"
+    ports:
+      - '${IP_ADDRESS}:8282:8181'
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - './headphones:/config'
+      - '${DLDIR}/completed:/downloads'
+      - '${MUSICDIR}:/music'

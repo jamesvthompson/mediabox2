@@ -1,0 +1,22 @@
+# module: tautulli
+# description: Tautulli - Plex analytics
+# category: System & Monitoring
+# depends: (none)
+# config_requires:
+# port: 8181
+
+services:
+  tautulli:
+    image: tautulli/tautulli
+    container_name: tautulli
+    restart: unless-stopped
+    network_mode: "bridge"
+    ports:
+      - '${IP_ADDRESS}:8181:8181'
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - './tautulli:/config'
+      - './plex/Library/Application Support/Plex Media Server/Logs:/logs:ro'

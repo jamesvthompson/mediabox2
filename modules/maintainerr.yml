@@ -1,0 +1,17 @@
+# module: maintainerr
+# description: Maintainerr - Media cleanup
+# category: Utilities
+# depends: (none)
+# config_requires:
+# port: 6246
+
+services:
+  maintainerr:
+    image: jorenn92/maintainerr:latest
+    container_name: maintainerr
+    user: "${PUID}:${PGID}"
+    volumes:
+      - './maintainerr/data:/data'
+    ports:
+      - '${IP_ADDRESS}:6246:6246'
+    restart: unless-stopped

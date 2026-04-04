@@ -1,0 +1,23 @@
+# module: sickchill
+# description: SickChill - TV downloader (legacy)
+# category: Content Automation
+# depends: (none)
+# config_requires:
+# port: 8081
+
+services:
+  sickchill:
+    image: lscr.io/linuxserver/sickchill:2024.3.1-ls259
+    container_name: sickchill
+    restart: unless-stopped
+    network_mode: "bridge"
+    ports:
+      - '${IP_ADDRESS}:8081:8081'
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+    volumes:
+      - './sickchill:/config'
+      - '${DLDIR}/completed:/downloads'
+      - '${TVDIR}:/tv'
+      - '/etc/localtime:/etc/localtime:ro'

@@ -1,0 +1,32 @@
+# module: tdarr-node
+# description: Tdarr-Node - Transcoding worker
+# category: Media Processing
+# depends: tdarr
+# config_requires:
+# port:
+
+services:
+  tdarr-node:
+    image: haveagitgat/tdarr_node:latest
+    container_name: tdarr-node
+    restart: unless-stopped
+    network_mode: service:tdarr
+    environment:
+      - TZ=${TZ}
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - UMASK_SET=002
+      - nodeID=Node_01
+      - nodeIP=${IP_ADDRESS}
+      - nodePort=8267
+      - serverIP=${IP_ADDRESS}
+      - serverPort=8266
+    volumes:
+      - './tdarr/configs:/app/configs'
+      - './tdarr/logs:/app/logs'
+      - './tdarr/transcode_cache:/temp'
+      - '${MISCDIR}:/data/misc'
+      - '${MOVIEDIR}:/data/movies'
+      - '${MUSICDIR}:/data/music'
+      - '${TVDIR}:/data/tvshows'
+      - '/etc/localtime:/etc/localtime:ro'

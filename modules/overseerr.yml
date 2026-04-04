@@ -1,0 +1,22 @@
+# module: overseerr
+# description: Overseerr - Request management
+# category: Request Management
+# depends: (none)
+# config_requires:
+# port: 5055
+
+services:
+  overseerr:
+    image: lscr.io/linuxserver/overseerr
+    container_name: overseerr
+    restart: unless-stopped
+    network_mode: "bridge"
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - LOG_LEVEL=info
+      - TZ=${TZ}
+    ports:
+      - '${IP_ADDRESS}:5055:5055'
+    volumes:
+      - './overseerr:/config'

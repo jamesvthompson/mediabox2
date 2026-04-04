@@ -1,0 +1,22 @@
+# module: nzbhydra2
+# description: NZBHydra2 - NZB meta search
+# category: Indexers
+# depends: (none)
+# config_requires:
+# port: 5076
+
+services:
+  nzbhydra2:
+    image: lscr.io/linuxserver/nzbhydra2
+    container_name: nzbhydra2
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    network_mode: "bridge"
+    ports:
+      - '${IP_ADDRESS}:5076:5076'
+    volumes:
+      - './nzbhydra2:/config'
+      - '${DLDIR}:/downloads'

@@ -1,0 +1,23 @@
+# module: radarr
+# description: Radarr - Movie management
+# category: Content Automation
+# depends: (none)
+# config_requires:
+# port: 7878
+
+services:
+  radarr:
+    image: lscr.io/linuxserver/radarr
+    container_name: radarr
+    restart: unless-stopped
+    network_mode: "bridge"
+    ports:
+      - '${IP_ADDRESS}:7878:7878'
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+    volumes:
+      - './radarr:/config'
+      - '${DLDIR}/completed:/data/completed'
+      - '${MOVIEDIR}:/movies'
+      - '/etc/localtime:/etc/localtime:ro'

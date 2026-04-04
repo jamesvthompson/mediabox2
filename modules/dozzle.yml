@@ -1,0 +1,17 @@
+# module: dozzle
+# description: Dozzle - Container log viewer
+# category: System & Monitoring
+# depends: (none)
+# config_requires:
+# port: 9999
+
+services:
+  dozzle:
+    image: amir20/dozzle:latest
+    container_name: dozzle
+    restart: unless-stopped
+    network_mode: "bridge"
+    ports:
+      - '${IP_ADDRESS}:9999:8080'
+    volumes:
+      - '/var/run/docker.sock:/var/run/docker.sock'
