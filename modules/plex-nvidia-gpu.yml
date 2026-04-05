@@ -1,4 +1,4 @@
-# module: plex-nvidia-gpu
+# variant-of: plex
 # description: Plex - Media streaming server (NVIDIA GPU)
 # category: Media Servers
 # depends: (none)

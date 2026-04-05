@@ -1,4 +1,4 @@
-# module: plex-intel-gpu
+# variant-of: plex
 # description: Plex - Media streaming server (Intel GPU)
 # category: Media Servers
 # depends: (none)
