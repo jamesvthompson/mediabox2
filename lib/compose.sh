@@ -22,6 +22,13 @@ assemble_compose() {
 
     for mod in $selected; do
         local mod_file="$modules_dir/${mod}.yml"
+
+        # Swap plex module for GPU variant if configured
+        if [ "$mod" = "plex" ] && [ -n "${PLEX_GPU:-}" ] && [ "$PLEX_GPU" != "none" ]; then
+            mod_file="$modules_dir/plex-${PLEX_GPU}-gpu.yml"
+            log_info "Using Plex with ${PLEX_GPU} GPU transcoding"
+        fi
+
         if [ ! -f "$mod_file" ]; then
             log_warn "Module file not found: $mod_file (skipping)"
             continue

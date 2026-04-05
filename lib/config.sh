@@ -78,6 +78,17 @@ prompt_plex_config() {
         PMSTAG="public"
     fi
     log_info "Plex release type: $PMSTAG"
+
+    # GPU transcoding prompt
+    PLEX_GPU=$(whiptail_radiolist "Plex GPU Transcoding" \
+        "none"   "No GPU (software transcoding only)" "ON" \
+        "intel"  "Intel GPU (Intel Arc / QSV)"         "OFF" \
+        "nvidia" "NVIDIA GPU (NVENC)"                  "OFF") || PLEX_GPU="none"
+
+    if [ -z "$PLEX_GPU" ]; then
+        PLEX_GPU="none"
+    fi
+    log_info "Plex GPU transcoding: $PLEX_GPU"
 }
 
 prompt_vpn_config() {
@@ -143,11 +154,12 @@ prompt_daemon_credentials() {
 prompt_service_config() {
     local selected_services="$1"
 
-    # Plex config
+    # Plex config (release type + GPU transcoding)
     if echo "$selected_services" | grep -qw "plex"; then
         prompt_plex_config
     else
         PMSTAG="${PMSTAG:-public}"
+        PLEX_GPU="${PLEX_GPU:-none}"
     fi
 
     # VPN config (only if DelugeVPN selected)
@@ -199,6 +211,7 @@ PIAPASS=$PIAPASS
 CIDR_ADDRESS=$CIDR_ADDRESS
 TZ=$TZ
 PMSTAG=$PMSTAG
+PLEX_GPU=${PLEX_GPU:-none}
 VPN_REMOTE=$VPN_REMOTE
 CPDAEMONUN=${DAEMON_USER:-}
 CPDAEMONPASS=${DAEMON_PASS:-}
@@ -236,6 +249,7 @@ load_existing_config() {
                 CIDR_ADDRESS) CIDR_ADDRESS="$value" ;;
                 TZ)           TZ="$value" ;;
                 PMSTAG)       PMSTAG="$value" ;;
+                PLEX_GPU)     PLEX_GPU="$value" ;;
                 VPN_REMOTE)   VPN_REMOTE="$value" ;;
                 CPDAEMONUN)   DAEMON_USER="$value" ;;
                 CPDAEMONPASS) DAEMON_PASS="$value" ;;
