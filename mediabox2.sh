@@ -319,12 +319,12 @@ main_menu() {
             "exit"         "Exit") || break
 
         case "$choice" in
-            new_install)  do_new_install ;;
-            update)       do_update ;;
-            relaunch)     do_relaunch ;;
-            reconfigure)  do_reconfigure ;;
-            status)       do_status ;;
-            reset)        do_reset ;;
+            new_install)  do_new_install || true ;;
+            update)       do_update || true ;;
+            relaunch)     do_relaunch || true ;;
+            reconfigure)  do_reconfigure || true ;;
+            status)       do_status || true ;;
+            reset)        do_reset || true ;;
             exit|"")      break ;;
         esac
     done

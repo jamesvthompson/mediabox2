@@ -22,7 +22,7 @@ CATEGORIES=(
 parse_module_meta() {
     local file="$1"
     local key="$2"
-    grep "^# ${key}:" "$file" | sed "s/^# ${key}: *//" | head -1
+    grep "^# ${key}:" "$file" 2>/dev/null | sed "s/^# ${key}: *//" | head -1 || true
 }
 
 # Discover all modules in the modules/ directory
