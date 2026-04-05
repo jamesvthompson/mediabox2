@@ -4,6 +4,10 @@
 # depends: (none)
 # config_requires: PIAUNAME,PIAPASS,VPN_REMOTE
 # port: 8112
+# homer_group: get
+# homer_name: Deluge
+# homer_icon: assets/icons/deluge.png
+# homer_url: http://locip:8112
 
 services:
   arch-delugevpn:

@@ -4,6 +4,10 @@
 # depends: (none)
 # config_requires:
 # port: 8989
+# homer_group: manage
+# homer_name: Sonarr
+# homer_icon: assets/icons/sonarr.png
+# homer_url: http://locip:8989
 
 services:
   sonarr:

@@ -4,6 +4,10 @@
 # depends: (none)
 # config_requires:
 # port: 8200
+# homer_group: monitor
+# homer_name: Duplicati
+# homer_icon: assets/icons/duplicati.png
+# homer_url: http://locip:8200
 
 services:
   duplicati:

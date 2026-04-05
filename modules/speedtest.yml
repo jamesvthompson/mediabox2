@@ -4,6 +4,10 @@
 # depends: (none)
 # config_requires:
 # port: 8765
+# homer_group: monitor
+# homer_name: Speedtest
+# homer_icon: assets/icons/librespeed.png
+# homer_url: http://locip:8765
 
 services:
   speedtest:

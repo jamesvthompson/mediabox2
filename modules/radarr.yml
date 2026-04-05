@@ -4,6 +4,10 @@
 # depends: (none)
 # config_requires:
 # port: 7878
+# homer_group: manage
+# homer_name: Radarr
+# homer_icon: assets/icons/radarr.png
+# homer_url: http://locip:7878
 
 services:
   radarr:

@@ -4,6 +4,7 @@
 # depends: tdarr
 # config_requires:
 # port:
+# homer_group:
 
 services:
   tdarr-node:

@@ -4,6 +4,10 @@
 # depends: (none)
 # config_requires:
 # port: 8281
+# homer_group: get
+# homer_name: MeTube
+# homer_icon: assets/icons/youtubedl.png
+# homer_url: http://locip:8281
 
 services:
   metube:

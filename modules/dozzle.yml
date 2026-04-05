@@ -4,6 +4,10 @@
 # depends: (none)
 # config_requires:
 # port: 9999
+# homer_group: monitor
+# homer_name: Dozzle
+# homer_icon: assets/icons/dozzle.png
+# homer_url: http://locip:9999
 
 services:
   dozzle:

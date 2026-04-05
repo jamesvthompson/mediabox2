@@ -4,6 +4,10 @@
 # depends: (none)
 # config_requires:
 # port: 6789
+# homer_group: get
+# homer_name: NZBGet
+# homer_icon: assets/icons/nzbget.png
+# homer_url: http://locip:6789
 
 services:
   nzbget:

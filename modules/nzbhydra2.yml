@@ -4,6 +4,10 @@
 # depends: (none)
 # config_requires:
 # port: 5076
+# homer_group: get
+# homer_name: NZBHydra2
+# homer_icon: assets/icons/nzbhydra.png
+# homer_url: http://locip:5076
 
 services:
   nzbhydra2:

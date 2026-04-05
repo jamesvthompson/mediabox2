@@ -4,6 +4,10 @@
 # depends: (none)
 # config_requires:
 # port: 61208
+# homer_group: monitor
+# homer_name: Glances
+# homer_icon: assets/icons/glances.png
+# homer_url: http://locip:61208
 
 services:
   glances:

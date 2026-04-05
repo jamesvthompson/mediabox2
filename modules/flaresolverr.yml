@@ -4,6 +4,7 @@
 # depends: (none)
 # config_requires:
 # port: 8191
+# homer_group:
 
 services:
   flaresolverr:

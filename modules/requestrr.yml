@@ -4,6 +4,10 @@
 # depends: (none)
 # config_requires:
 # port: 4545
+# homer_group: get
+# homer_name: Requestrr
+# homer_icon: assets/icons/requestrr.png
+# homer_url: http://locip:4545
 
 services:
   requestrr:

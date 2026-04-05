@@ -4,6 +4,10 @@
 # depends: (none)
 # config_requires:
 # port: 9696
+# homer_group: get
+# homer_name: Prowlarr
+# homer_icon: assets/icons/prowlarr.png
+# homer_url: http://locip:9696
 
 services:
   prowlarr:

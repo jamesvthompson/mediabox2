@@ -4,6 +4,10 @@
 # depends: (none)
 # config_requires:
 # port: 5055
+# homer_group: get
+# homer_name: Overseerr
+# homer_icon: assets/icons/overseerr.png
+# homer_url: http://locip:5055
 
 services:
   overseerr:

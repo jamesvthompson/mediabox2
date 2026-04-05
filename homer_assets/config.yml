@@ -2,7 +2,7 @@
 # Homepage configuration
 # See http://fontawesome.com/icons for icons options
 
-title: "Mediabox"
+title: "Mediabox2"
 subtitle: "thishost"
 icon: "far fa-play-circle" # Optional icon
 
@@ -40,13 +40,9 @@ colors:
     link-hover: "#ffdd57"
 
 links:
-  - name: "Mediabox"
+  - name: "Mediabox2"
     icon: "fab fa-github"
-    url: "https://github.com/tom472/mediabox"
-    target: "_blank"
-  - name: "Buy me a coffee"
-    icon: "fas fa-mug-hot"
-    url: "https://cash.app/$TomMorgan"
+    url: "https://github.com/jamesvthompson/mediabox2"
     target: "_blank"
   - name: "Getting Started"
     icon: "fas fas fa-check-square"

@@ -4,6 +4,10 @@
 # depends: (none)
 # config_requires:
 # port: 8265
+# homer_group: monitor
+# homer_name: Tdarr
+# homer_icon: assets/icons/tdarr.png
+# homer_url: http://locip:8265
 
 services:
   tdarr:

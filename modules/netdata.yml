@@ -4,6 +4,10 @@
 # depends: (none)
 # config_requires:
 # port: 19999
+# homer_group: monitor
+# homer_name: Netdata
+# homer_icon: assets/icons/netdata.png
+# homer_url: http://locip:19999
 
 services:
   netdata:

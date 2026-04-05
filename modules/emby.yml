@@ -4,6 +4,10 @@
 # depends: (none)
 # config_requires:
 # port: 8696
+# homer_group: watch
+# homer_name: Emby
+# homer_icon: assets/icons/emby.png
+# homer_url: http://locip:8696
 
 services:
   emby:

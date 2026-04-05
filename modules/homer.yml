@@ -4,6 +4,7 @@
 # depends: (none)
 # config_requires:
 # port: 80
+# homer_group:
 
 services:
   homer:

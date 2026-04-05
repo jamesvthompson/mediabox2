@@ -4,6 +4,7 @@
 # depends: (none)
 # config_requires:
 # port:
+# homer_group:
 
 services:
   watchtower:

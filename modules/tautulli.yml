@@ -4,6 +4,10 @@
 # depends: (none)
 # config_requires:
 # port: 8181
+# homer_group: monitor
+# homer_name: Tautulli
+# homer_icon: assets/icons/tautulli.png
+# homer_url: http://locip:8181
 
 services:
   tautulli:

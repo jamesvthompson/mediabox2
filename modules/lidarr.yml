@@ -4,6 +4,10 @@
 # depends: (none)
 # config_requires:
 # port: 8686
+# homer_group: manage
+# homer_name: Lidarr
+# homer_icon: assets/icons/lidarr.png
+# homer_url: http://locip:8686
 
 services:
   lidarr:

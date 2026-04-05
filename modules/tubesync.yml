@@ -4,6 +4,10 @@
 # depends: (none)
 # config_requires:
 # port: 4848
+# homer_group: get
+# homer_name: TubeSync
+# homer_icon: assets/icons/tubesync.png
+# homer_url: http://locip:4848
 
 services:
   tubesync:
