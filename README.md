@@ -157,7 +157,8 @@ cd mediabox2
 3. **PIA VPN credentials** — only if DelugeVPN is selected
 4. **VPN server selection** — choose from bundled PIA OpenVPN configs
 5. **Plex release type** — `public`, `latest`, or `plexpass` (only if Plex is selected)
-6. **Daemon credentials** — username/password for Deluge daemon and NZBGet access (only if either is selected)
+6. **Plex GPU Transcoding** — optional GPU acceleration: none (software only), Intel GPU (Arc/QSV), or NVIDIA GPU (NVENC) (only if Plex is selected)
+7. **Daemon credentials** — username/password for Deluge daemon and NZBGet access (only if either is selected)
 
 ---
 
@@ -197,10 +198,11 @@ Each service is a self-contained module in `modules/`. During install, selected 
 
 ## Notes
 
-- After install, access the Homer dashboard at `http://<your-ip>` for links to all services
+- After install, access the Homer dashboard at `http://<your-ip>`. The dashboard displays only the services you selected during install, organized into categories: Get It (downloaders), Manage It (library managers), Monitor It (monitoring), and Watch It (media servers).
 - Portainer is available at `https://<your-ip>:9443` — set a password on first login
 - The `.env` file holds all your configuration. A timestamped backup is saved before any reset.
-- To add or remove services later, use **Reconfigure Services** from the main menu
+- To add or remove services later, use **Reconfigure Services** from the main menu. The Homer dashboard automatically updates to reflect your new selection.
+- Cancelling any prompt safely returns you to the main menu
 
 ---
 
@@ -210,4 +212,24 @@ THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESSED OR IMPLIED WARRANTIES, INCLU
 
 ## License
 
-MIT License — Copyright (c) 2017 Tom Morgan
+MIT License
+
+Copyright (c) 2025 Mediabox2
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
