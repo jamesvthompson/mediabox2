@@ -88,8 +88,9 @@ whiptail_gauge() {
 
 whiptail_radiolist() {
     local title="$1"
-    shift
-    whiptail --title "$title" --radiolist "" "$WT_HEIGHT" "$WT_WIDTH" "$WT_LIST_HEIGHT" "$@" 3>&1 1>&2 2>&3
+    local prompt="$2"
+    shift 2
+    whiptail --title "$title" --radiolist "$prompt" "$WT_HEIGHT" "$WT_WIDTH" "$WT_LIST_HEIGHT" "$@" 3>&1 1>&2 2>&3
 }
 
 whiptail_textbox() {

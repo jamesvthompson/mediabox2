@@ -70,6 +70,7 @@ create_media_dirs() {
 
 prompt_plex_config() {
     PMSTAG=$(whiptail_radiolist "Plex Release Type" \
+        "Select the Plex release channel:" \
         "public"   "Public release (stable)" "ON" \
         "latest"   "Latest release"          "OFF" \
         "plexpass" "PlexPass release"        "OFF") || PMSTAG="public"
@@ -81,6 +82,7 @@ prompt_plex_config() {
 
     # GPU transcoding prompt
     PLEX_GPU=$(whiptail_radiolist "Plex GPU Transcoding" \
+        "Select GPU acceleration for Plex transcoding:" \
         "none"   "No GPU (software transcoding only)" "ON" \
         "intel"  "Intel GPU (Intel Arc / QSV)"         "OFF" \
         "nvidia" "NVIDIA GPU (NVENC)"                  "OFF") || PLEX_GPU="none"
@@ -120,7 +122,9 @@ prompt_vpn_config() {
     done
 
     local selected_server
-    selected_server=$(whiptail_radiolist "PIA VPN Server" "${servers[@]}") || return 1
+    selected_server=$(whiptail_radiolist "PIA VPN Server" \
+        "Select a VPN server location for DelugeVPN.\nYour torrents will route through this server:" \
+        "${servers[@]}") || return 1
 
     # Copy VPN files to delugevpn config
     local vpn_dest="$BASE_DIR/delugevpn/config/openvpn"
