@@ -3,6 +3,9 @@
 
 set -euo pipefail
 
+DEBUG_MODE=${DEBUG_MODE:-false}
+LOG_FILE=""
+
 # Terminal dimensions for whiptail
 WT_HEIGHT=${WT_HEIGHT:-24}
 WT_WIDTH=${WT_WIDTH:-78}
@@ -22,18 +25,98 @@ NC='\033[0m' # No Color
 
 log_info() {
     printf "${GREEN}[INFO]${NC} %s\n" "$*"
+    log_to_file "INFO" "$*"
 }
 
 log_warn() {
     printf "${YELLOW}[WARN]${NC} %s\n" "$*"
+    log_to_file "WARN" "$*"
 }
 
 log_error() {
     printf "${RED}[ERROR]${NC} %s\n" "$*" >&2
+    log_to_file "ERROR" "$*"
 }
 
 log_step() {
     printf "${BLUE}[STEP]${NC} %s\n" "$*"
+    log_to_file "STEP" "$*"
+}
+
+log_debug() {
+    if [ "${DEBUG_MODE:-false}" = "true" ]; then
+        printf "[DEBUG] %s\n" "$*"
+    fi
+    log_to_file "DEBUG" "$*"
+}
+
+log_decision() {
+    log_info "Decision: $*"
+}
+
+log_to_file() {
+    local level="$1"
+    shift
+    if [ -n "${LOG_FILE:-}" ]; then
+        printf '%s [%s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$level" "$*" >> "$LOG_FILE"
+    fi
+}
+
+init_logging() {
+    local base_dir="$1"
+    LOG_FILE="$base_dir/install.log"
+    touch "$LOG_FILE"
+    log_info "Logging initialized: $LOG_FILE"
+    if [ "${DEBUG_MODE:-false}" = "true" ]; then
+        log_info "Debug mode enabled."
+    fi
+}
+
+run_and_log() {
+    local cmd_display="$1"
+    shift
+    log_debug "Running command: $cmd_display"
+    local tmp_output
+    tmp_output=$(mktemp)
+    local exit_code=0
+
+    # Keep compose's interactive per-container progress when running in a TTY.
+    # `script` allocates a pseudo-terminal and mirrors output to a transcript file.
+    if [ -t 1 ] && command -v script >/dev/null 2>&1; then
+        local cmd_escaped=""
+        local arg
+        for arg in "$@"; do
+            printf -v cmd_escaped '%s%q ' "$cmd_escaped" "$arg"
+        done
+        set +e
+        script -q -e -c "$cmd_escaped" "$tmp_output"
+        exit_code=$?
+        set -e
+    else
+        # Fallback for non-interactive shells/environments.
+        set +e
+        "$@" 2>&1 | tee "$tmp_output"
+        exit_code=${PIPESTATUS[0]}
+        set -e
+    fi
+
+    if [ -s "$tmp_output" ]; then
+        while IFS= read -r line; do
+            # Ignore util-linux script session headers/footers.
+            case "$line" in
+                "Script started on "*|"Script done on "*)
+                    continue
+                    ;;
+            esac
+            log_to_file "CMD" "$line"
+        done < "$tmp_output"
+    fi
+    rm -f "$tmp_output"
+
+    if [ $exit_code -ne 0 ]; then
+        log_error "Command failed (exit $exit_code): $cmd_display"
+    fi
+    return $exit_code
 }
 
 # ========================================

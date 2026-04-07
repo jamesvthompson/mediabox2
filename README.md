@@ -36,6 +36,7 @@ Mediabox2 is a modular, menu-driven Docker media server installer using whiptail
 * [SQLiteBrowser DB browser for SQLite](https://sqlitebrowser.org/)
 * [Tautulli Plex Media Server monitor](https://github.com/tautulli/tautulli)
 * [Tdarr Distributed Transcoding System](https://tdarr.io)
+* [Tdarr-Node distributed worker for Tdarr](https://docs.tdarr.io/docs/welcome/what/)
 * [TubeSync - YouTube PVR](https://github.com/meeb/tubesync)
 * [Watchtower Automatic container updater](https://github.com/containrrr/watchtower)
 
@@ -122,27 +123,51 @@ cd mediabox2
 ./mediabox2.sh
 ```
 
+### Optional: run in debug mode
+```bash
+./mediabox2.sh --debug
+```
+
+Debug mode increases troubleshooting visibility and writes additional debug entries.
+
+### Installer log file
+
+Mediabox2 now writes a central log file at:
+
+```bash
+./install.log
+```
+
+The log includes:
+- installer decisions (for example, selected actions/services)
+- failures and error messages
+- docker compose command output (`up`, `pull`, `down`, etc.)
+
 ---
 
 ## Main Menu
 
 ```
-┌─────────────────────────────────┐
-│        Mediabox2 Installer      │
-│                                 │
-│  1. New Install                 │
-│  2. Update Existing Install     │
-│  3. Relaunch Existing Stack     │
-│  4. Reconfigure Services        │
-│  5. Status                      │
-│  6. Reset                       │
-│  7. Exit                        │
-└─────────────────────────────────┘
+┌──────────────────────────────────┐
+│        Mediabox2 Installer       │
+│                                  │
+│  1. New Install                  │
+│  2. Re-pull + relaunch containers│
+│  3. Update media directories     │
+│  4. Update service credentials   │
+│  5. Relaunch containers only     │
+│  6. Reconfigure Services         │
+│  7. Status                       │
+│  8. Reset                        │
+│  9. Exit                         │
+└──────────────────────────────────┘
 ```
 
 - **New Install** - Full guided setup: select services, configure paths, deploy
-- **Update Existing Install** - Pull latest images and restart containers
-- **Relaunch Existing Stack** - Restart existing containers without reconfiguring
+- **Re-pull + relaunch containers** - Re-pull latest images for installed services and relaunch the stack
+- **Update media directories** - Re-run media path prompts, regenerate `.env`, and relaunch with updated paths
+- **Update service credentials** - Update managed credentials (PIA and/or daemon credentials where applicable) and refresh services
+- **Relaunch containers only** - Restart existing containers without reconfiguring
 - **Reconfigure Services** - Add or remove services from your running stack
 - **Status** - View running containers and port mappings
 - **Reset** - Stop everything and clean up generated files
@@ -153,12 +178,30 @@ cd mediabox2
 ## What You'll Be Asked During New Install
 
 1. **Media directory paths** — where your downloads, TV, movies, music, and misc files live (defaults provided)
-2. **Which services to install** — a categorized checklist; select any combination or all
+2. **Which services to install** — a categorized checklist; select any combination, all services, or a preset stack (`Default Plex Stack` / `Default Jellyfin Stack`)
 3. **PIA VPN credentials** — only if DelugeVPN is selected
 4. **VPN server selection** — choose from bundled PIA OpenVPN configs
 5. **Plex release type** — `public`, `latest`, or `plexpass` (only if Plex is selected)
 6. **Plex GPU Transcoding** — optional GPU acceleration: none (software only), Intel GPU (Arc/QSV), or NVIDIA GPU (NVENC) (only if Plex is selected)
 7. **Daemon credentials** — username/password for Deluge daemon and NZBGet access (only if either is selected)
+
+### Preset Stacks
+
+Mediabox2 supports multiple configuration profiles in the installer:
+
+- **Full (everything)**: selects all available service modules
+- **Standard Plex stack**: preselected Plex-focused stack
+- **Standard Jellyfin stack**: preselected Jellyfin-focused stack
+- **Minimal (Plex only)**: installs only Plex
+- **Minimal (Jellyfin only)**: installs only Jellyfin
+- **Custom**: opens the full checklist to choose services manually
+
+Preset module lists used by the standard profiles:
+
+- **DEFAULT_PLEX**: `plex sonarr radarr prowlarr delugevpn overseerr tautulli homer watchtower portainer`
+- **DEFAULT_JELLYFIN**: `jellyfin sonarr radarr prowlarr delugevpn overseerr homer watchtower portainer`
+
+`tautulli` is intentionally included only in the Plex preset, since it is Plex-focused.
 
 ---
 
@@ -187,12 +230,12 @@ lib/
   services.sh         # Module discovery, selection UI, dependency resolution
   compose.sh          # Docker-compose assembly & management
   postinstall.sh      # Post-deploy configuration hooks
-modules/              # 35 YAML files — one per service (compose fragments + metadata)
+modules/              # Primary service modules (+ optional variant fragments such as Plex GPU compose variants)
 ovpn/                 # Bundled PIA OpenVPN configuration files
 homer_assets/         # Homer dashboard templates and icons
 ```
 
-Each service is a self-contained module in `modules/`. During install, selected modules are merged into a single `docker-compose.yml` via `yq`.
+Each service is a self-contained module in `modules/` (files identified by a `# module:` metadata header). Some additional files are variant compose fragments (for example, Plex GPU variants) used conditionally during compose assembly. During install, selected modules are merged into a single `docker-compose.yml` via `yq`.
 
 ---
 

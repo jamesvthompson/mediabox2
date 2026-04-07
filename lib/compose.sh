@@ -44,10 +44,8 @@ assemble_compose() {
         fi
 
         local merged="$temp_dir/merged_${count}.yml"
-        yq eval-all 'select(fileIndex == 0) *+ select(fileIndex == 1)' \
-            "$current" "$clean_file" > "$merged" 2>/dev/null
-
-        if [ $? -eq 0 ] && [ -s "$merged" ]; then
+        if yq eval-all 'select(fileIndex == 0) *+ select(fileIndex == 1)' \
+            "$current" "$clean_file" > "$merged" 2>/dev/null && [ -s "$merged" ]; then
             current="$merged"
             count=$((count + 1))
         else
@@ -71,8 +69,8 @@ assemble_compose() {
 compose_up() {
     log_step "Starting containers..."
     cd "$BASE_DIR"
-    docker compose up -d --remove-orphans 2>&1
-    local exit_code=$?
+    run_and_log "docker compose up -d --remove-orphans" docker compose up -d --remove-orphans
+    local exit_code=$?    
     if [ $exit_code -eq 0 ]; then
         log_info "Containers started successfully."
     else
@@ -86,9 +84,9 @@ compose_down() {
     log_step "Stopping containers..."
     cd "$BASE_DIR"
     if [ "$remove_volumes" = "true" ]; then
-        docker compose down -v 2>&1
+        run_and_log "docker compose down -v" docker compose down -v
     else
-        docker compose down 2>&1
+        run_and_log "docker compose down" docker compose down
     fi
     local exit_code=$?
     if [ $exit_code -eq 0 ]; then
@@ -102,7 +100,7 @@ compose_down() {
 compose_pull() {
     log_step "Pulling latest images..."
     cd "$BASE_DIR"
-    docker compose pull 2>&1
+    run_and_log "docker compose pull" docker compose pull
     local exit_code=$?
     if [ $exit_code -eq 0 ]; then
         log_info "Images updated."
@@ -115,13 +113,13 @@ compose_pull() {
 compose_stop() {
     log_step "Stopping containers..."
     cd "$BASE_DIR"
-    docker compose stop 2>&1
+    run_and_log "docker compose stop" docker compose stop
 }
 
 compose_restart() {
     log_step "Restarting containers..."
     cd "$BASE_DIR"
-    docker compose restart 2>&1
+    run_and_log "docker compose restart" docker compose restart
 }
 
 # ========================================

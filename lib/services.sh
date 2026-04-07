@@ -13,6 +13,13 @@ CATEGORIES=(
     "Utilities"
 )
 
+# Config profiles
+# Keep values as plain strings and normalize before use.
+DEFAULT_PLEX="plex sonarr radarr prowlarr delugevpn overseerr tautulli homer watchtower portainer"
+DEFAULT_JELLYFIN="jellyfin sonarr radarr prowlarr delugevpn overseerr homer watchtower portainer"
+PROFILE_MINIMAL_PLEX="plex"
+PROFILE_MINIMAL_JELLYFIN="jellyfin"
+
 # ========================================
 # Module Discovery
 # ========================================
@@ -28,6 +35,20 @@ parse_module_meta() {
 # Discover all modules in the modules/ directory
 # Populates associative arrays for module metadata
 declare -A MODULE_DESC MODULE_CAT MODULE_DEPS MODULE_PORT MODULE_CONFIG
+
+normalize_whitespace() {
+    echo "$1" | xargs
+}
+
+expand_service_preset() {
+    case "$1" in
+        DEFAULT_PLEX) echo "$DEFAULT_PLEX" ;;
+        DEFAULT_JELLYFIN) echo "$DEFAULT_JELLYFIN" ;;
+        PROFILE_MINIMAL_PLEX) echo "$PROFILE_MINIMAL_PLEX" ;;
+        PROFILE_MINIMAL_JELLYFIN) echo "$PROFILE_MINIMAL_JELLYFIN" ;;
+        *) echo "$1" ;;
+    esac
+}
 
 discover_modules() {
     local modules_dir="$BASE_DIR/modules"
@@ -54,15 +75,60 @@ discover_modules() {
 # Service Selection UI
 # ========================================
 
+choose_services_with_profile() {
+    local custom_preselected="${1:-}"
+    SELECTED_SERVICES=""
+    local profile_list_height=10
+
+    local profile
+    profile=$(whiptail --title "Configuration Profile" --radiolist \
+        "Choose a configuration profile.\n\nStandard Plex: plex, sonarr, radarr, prowlarr, delugevpn, overseerr, tautulli, homer, watchtower, portainer\nStandard Jellyfin: jellyfin, sonarr, radarr, prowlarr, delugevpn, overseerr, homer, watchtower, portainer" \
+        "$WT_HEIGHT" "$WT_WIDTH" "$profile_list_height" \
+        "full"              "Full (everything)"                              "OFF" \
+        "standard_plex"     "Standard Plex stack"                            "ON" \
+        "standard_jellyfin" "Standard Jellyfin stack"                        "OFF" \
+        "minimal_plex"      "Minimal (Plex only)"                            "OFF" \
+        "minimal_jellyfin"  "Minimal (Jellyfin only)"                        "OFF" \
+        "custom"            "Custom (choose individual services next screen)" "OFF" \
+        3>&1 1>&2 2>&3) || return 1
+
+    case "$profile" in
+        minimal_plex)
+            SELECTED_SERVICES=$(normalize_whitespace "$PROFILE_MINIMAL_PLEX")
+            ;;
+        minimal_jellyfin)
+            SELECTED_SERVICES=$(normalize_whitespace "$PROFILE_MINIMAL_JELLYFIN")
+            ;;
+        standard_plex)
+            SELECTED_SERVICES=$(normalize_whitespace "$DEFAULT_PLEX")
+            ;;
+        standard_jellyfin)
+            SELECTED_SERVICES=$(normalize_whitespace "$DEFAULT_JELLYFIN")
+            ;;
+        full)
+            local all_selected=""
+            for mod in "${ALL_MODULES[@]}"; do
+                all_selected+="$mod "
+            done
+            SELECTED_SERVICES=$(normalize_whitespace "$all_selected")
+            ;;
+        custom)
+            show_service_selector "$custom_preselected" || return 1
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
 # Sets global SELECTED_SERVICES variable (not stdout) to avoid subshell issues
 # with associative arrays. Caller must NOT use $(...) to capture output.
 show_service_selector() {
     local preselected="${1:-}"
+    preselected=$(expand_service_preset "$preselected")
+    preselected=$(normalize_whitespace "$preselected")
     SELECTED_SERVICES=""
     local checklist_args=()
-
-    # Add "SELECT ALL" as first option
-    checklist_args+=("SELECT_ALL" "── Select/Deselect All Services ──" "OFF")
 
     # Group modules by category
     for category in "${CATEGORIES[@]}"; do
@@ -82,32 +148,37 @@ show_service_selector() {
                 if [ "$preselected" = "ALL" ] || echo "$preselected" | grep -qw "$mod"; then
                     status="ON"
                 fi
-                local port_info=""
-                if [ -n "${MODULE_PORT[$mod]:-}" ]; then
-                    port_info=" :${MODULE_PORT[$mod]}"
-                fi
-                checklist_args+=("$mod" "[${category}] ${MODULE_DESC[$mod]}${port_info}" "$status")
+                checklist_args+=("$mod" "${MODULE_DESC[$mod]}" "$status")
             fi
         done
     done
 
+    local checklist_height="$WT_HEIGHT"
+    local checklist_width="$WT_WIDTH"
+    local checklist_list_height="$WT_LIST_HEIGHT"
+
+    # Keep enough room for title/prompt/buttons so the list never overlaps
+    # the top of the dialog on smaller terminals.
+    local max_list_height=$((checklist_height - 8))
+    if [ "$max_list_height" -lt 5 ]; then
+        max_list_height=5
+    fi
+    if [ "$checklist_list_height" -gt "$max_list_height" ]; then
+        checklist_list_height="$max_list_height"
+    fi
+
     local selected
     selected=$(whiptail --title "Service Selection" \
-        --checklist "Select services to install (SPACE to toggle, ENTER to confirm):" \
-        30 78 22 "${checklist_args[@]}" 3>&1 1>&2 2>&3) || return 1
+        --checklist "Select services (SPACE toggle, TAB buttons, ENTER confirm)." \
+        "$checklist_height" "$checklist_width" "$checklist_list_height" "${checklist_args[@]}" 3>&1 1>&2 2>&3) || return 1
 
     # Remove quotes from whiptail output
     selected=$(echo "$selected" | tr -d '"')
 
-    # Handle SELECT_ALL
-    if echo "$selected" | grep -qw "SELECT_ALL"; then
-        selected=""
-        for mod in "${ALL_MODULES[@]}"; do
-            selected+="$mod "
-        done
-    fi
+    # Deduplicate while preserving order
+    selected=$(for mod in $selected; do echo "$mod"; done | awk '!seen[$0]++')
 
-    SELECTED_SERVICES=$(echo "$selected" | xargs)
+    SELECTED_SERVICES=$(normalize_whitespace "$selected")
 }
 
 # ========================================
