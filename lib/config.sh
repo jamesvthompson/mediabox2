@@ -9,7 +9,7 @@ detect_system_info() {
     LOCALUSER=$(id -u -n)
     PUID=$(id -u "$LOCALUSER")
     PGID=$(id -g "$LOCALUSER")
-    DOCKERGRP=$(grep docker /etc/group | cut -d ':' -f 3)
+    DOCKERGRP=$(getent group docker | cut -d ':' -f 3)
     HOSTNAME_VAL=$(hostname)
     IP_ADDRESS=$(hostname -I | awk '{print $1}')
     TZ=$(cat /etc/timezone 2>/dev/null || echo "UTC")
@@ -103,14 +103,21 @@ prompt_vpn_config() {
 
     # Select VPN server from ovpn files
     local ovpn_dir="$BASE_DIR/ovpn"
-    if [ ! -d "$ovpn_dir" ] || [ -z "$(ls -A "$ovpn_dir"/*.ovpn 2>/dev/null)" ]; then
+    local ovpn_files=()
+    if [ -d "$ovpn_dir" ]; then
+        shopt -s nullglob
+        ovpn_files=("$ovpn_dir"/*.ovpn)
+        shopt -u nullglob
+    fi
+
+    if [ ! -d "$ovpn_dir" ] || [ ${#ovpn_files[@]} -eq 0 ]; then
         log_error "No OpenVPN configuration files found in $ovpn_dir"
         return 1
     fi
 
     local servers=()
     local first=true
-    for f in "$ovpn_dir"/*.ovpn; do
+    for f in "${ovpn_files[@]}"; do
         local name
         name=$(basename "$f" .ovpn)
         if $first; then
