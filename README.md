@@ -131,18 +131,22 @@ cd mediabox2
 │        Mediabox2 Installer      │
 │                                 │
 │  1. New Install                 │
-│  2. Update Existing Install     │
-│  3. Relaunch Existing Stack     │
-│  4. Reconfigure Services        │
-│  5. Status                      │
-│  6. Reset                       │
-│  7. Exit                        │
+│  2. Re-pull + relaunch containers│
+│  3. Update media directories    │
+│  4. Update service credentials  │
+│  5. Relaunch containers only    │
+│  6. Reconfigure Services        │
+│  7. Status                      │
+│  8. Reset                       │
+│  9. Exit                        │
 └─────────────────────────────────┘
 ```
 
 - **New Install** - Full guided setup: select services, configure paths, deploy
-- **Update Existing Install** - Pull latest images and restart containers
-- **Relaunch Existing Stack** - Restart existing containers without reconfiguring
+- **Re-pull + relaunch containers** - Re-pull latest images for installed services and relaunch the stack
+- **Update media directories** - Re-run media path prompts, regenerate `.env`, and relaunch with updated paths
+- **Update service credentials** - Update managed credentials (PIA and/or daemon credentials where applicable) and refresh services
+- **Relaunch containers only** - Restart existing containers without reconfiguring
 - **Reconfigure Services** - Add or remove services from your running stack
 - **Status** - View running containers and port mappings
 - **Reset** - Stop everything and clean up generated files
