@@ -96,8 +96,8 @@ do_new_install() {
     # 3. Discover available modules
     discover_modules
 
-    # 4. Service selection
-    show_service_selector || { log_error "Service selection cancelled."; return 1; }
+    # 4. Config profile + service selection (custom only)
+    choose_services_with_profile || { log_error "Service/profile selection cancelled."; return 1; }
     local selected="$SELECTED_SERVICES"
 
     if [ -z "$selected" ]; then
@@ -296,8 +296,8 @@ do_reconfigure() {
     detect_system_info
     discover_modules
 
-    # Show service selector with currently installed services pre-checked
-    show_service_selector "$INSTALLED_SERVICES" || { log_error "Reconfiguration cancelled."; return 1; }
+    # Show profile selector first; custom selection pre-checks currently installed services
+    choose_services_with_profile "$INSTALLED_SERVICES" || { log_error "Reconfiguration cancelled."; return 1; }
     local selected="$SELECTED_SERVICES"
 
     if [ -z "$selected" ]; then
