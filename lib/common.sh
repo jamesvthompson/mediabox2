@@ -78,15 +78,36 @@ run_and_log() {
     log_debug "Running command: $cmd_display"
     local tmp_output
     tmp_output=$(mktemp)
+    local exit_code=0
 
-    # Stream command output live to preserve compose progress while still logging.
-    set +e
-    "$@" 2>&1 | tee "$tmp_output"
-    local exit_code=${PIPESTATUS[0]}
-    set -e
+    # Keep compose's interactive per-container progress when running in a TTY.
+    # `script` allocates a pseudo-terminal and mirrors output to a transcript file.
+    if [ -t 1 ] && command -v script >/dev/null 2>&1; then
+        local cmd_escaped=""
+        local arg
+        for arg in "$@"; do
+            printf -v cmd_escaped '%s%q ' "$cmd_escaped" "$arg"
+        done
+        set +e
+        script -q -e -c "$cmd_escaped" "$tmp_output"
+        exit_code=$?
+        set -e
+    else
+        # Fallback for non-interactive shells/environments.
+        set +e
+        "$@" 2>&1 | tee "$tmp_output"
+        exit_code=${PIPESTATUS[0]}
+        set -e
+    fi
 
     if [ -s "$tmp_output" ]; then
         while IFS= read -r line; do
+            # Ignore util-linux script session headers/footers.
+            case "$line" in
+                "Script started on "*|"Script done on "*)
+                    continue
+                    ;;
+            esac
             log_to_file "CMD" "$line"
         done < "$tmp_output"
     fi
