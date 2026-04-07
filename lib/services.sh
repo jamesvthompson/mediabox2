@@ -81,9 +81,9 @@ show_service_selector() {
     local checklist_args=()
 
     # Add quick actions as first options
-    checklist_args+=("SELECT_ALL" "── Select/Deselect All Services ──" "OFF")
-    checklist_args+=("DEFAULT_PLEX" "── Default Plex Stack ──" "OFF")
-    checklist_args+=("DEFAULT_JELLYFIN" "── Default Jellyfin Stack ──" "OFF")
+    checklist_args+=("SELECT_ALL" "Toggle all services" "OFF")
+    checklist_args+=("DEFAULT_PLEX" "Apply default Plex stack" "OFF")
+    checklist_args+=("DEFAULT_JELLYFIN" "Apply default Jellyfin stack" "OFF")
 
     # Group modules by category
     for category in "${CATEGORIES[@]}"; do
@@ -103,19 +103,15 @@ show_service_selector() {
                 if [ "$preselected" = "ALL" ] || echo "$preselected" | grep -qw "$mod"; then
                     status="ON"
                 fi
-                local port_info=""
-                if [ -n "${MODULE_PORT[$mod]:-}" ]; then
-                    port_info=" :${MODULE_PORT[$mod]}"
-                fi
-                checklist_args+=("$mod" "[${category}] ${MODULE_DESC[$mod]}${port_info}" "$status")
+                checklist_args+=("$mod" "${MODULE_DESC[$mod]}" "$status")
             fi
         done
     done
 
     local selected
     selected=$(whiptail --title "Service Selection" \
-        --checklist "Select services to install (SPACE to toggle, ENTER to confirm):" \
-        30 78 22 "${checklist_args[@]}" 3>&1 1>&2 2>&3) || return 1
+        --checklist "Select services (SPACE toggle, TAB buttons, ENTER confirm)." \
+        "$WT_HEIGHT" "$WT_WIDTH" "$WT_LIST_HEIGHT" "${checklist_args[@]}" 3>&1 1>&2 2>&3) || return 1
 
     # Remove quotes from whiptail output
     selected=$(echo "$selected" | tr -d '"')
