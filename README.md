@@ -127,19 +127,19 @@ cd mediabox2
 ## Main Menu
 
 ```
-┌─────────────────────────────────┐
-│        Mediabox2 Installer      │
-│                                 │
-│  1. New Install                 │
-│  2. Re-pull+relaunch containers │
-│  3. Update media directories    │
-│  4. Update service credentials  │
-│  5. Relaunch containers only    │
-│  6. Reconfigure Services        │
-│  7. Status                      │
-│  8. Reset                       │
-│  9. Exit                        │
-└─────────────────────────────────┘
+┌──────────────────────────────────┐
+│        Mediabox2 Installer       │
+│                                  │
+│  1. New Install                  │
+│  2. Re-pull + relaunch containers│
+│  3. Update media directories     │
+│  4. Update service credentials   │
+│  5. Relaunch containers only     │
+│  6. Reconfigure Services         │
+│  7. Status                       │
+│  8. Reset                        │
+│  9. Exit                         │
+└──────────────────────────────────┘
 ```
 
 - **New Install** - Full guided setup: select services, configure paths, deploy
