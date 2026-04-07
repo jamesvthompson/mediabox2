@@ -78,16 +78,19 @@ discover_modules() {
 choose_services_with_profile() {
     local custom_preselected="${1:-}"
     SELECTED_SERVICES=""
+    local profile_list_height=10
 
     local profile
-    profile=$(whiptail_radiolist "Configuration Profile" \
-        "Choose a configuration profile.\n\nStandard Plex: plex + sonarr + radarr + prowlarr + delugevpn + overseerr + tautulli + homer + watchtower + portainer\nStandard Jellyfin: jellyfin + sonarr + radarr + prowlarr + delugevpn + overseerr + homer + watchtower + portainer" \
+    profile=$(whiptail --title "Configuration Profile" --radiolist \
+        "Choose a configuration profile.\n\nStandard Plex: plex, sonarr, radarr, prowlarr, delugevpn, overseerr, tautulli, homer, watchtower, portainer\nStandard Jellyfin: jellyfin, sonarr, radarr, prowlarr, delugevpn, overseerr, homer, watchtower, portainer" \
+        "$WT_HEIGHT" "$WT_WIDTH" "$profile_list_height" \
         "full"              "Full (everything)"                              "OFF" \
         "standard_plex"     "Standard Plex stack"                            "ON" \
         "standard_jellyfin" "Standard Jellyfin stack"                        "OFF" \
         "minimal_plex"      "Minimal (Plex only)"                            "OFF" \
         "minimal_jellyfin"  "Minimal (Jellyfin only)"                        "OFF" \
-        "custom"            "Custom (choose individual services next screen)" "OFF") || return 1
+        "custom"            "Custom (choose individual services next screen)" "OFF" \
+        3>&1 1>&2 2>&3) || return 1
 
     case "$profile" in
         minimal_plex)
