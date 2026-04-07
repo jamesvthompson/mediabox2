@@ -36,6 +36,7 @@ Mediabox2 is a modular, menu-driven Docker media server installer using whiptail
 * [SQLiteBrowser DB browser for SQLite](https://sqlitebrowser.org/)
 * [Tautulli Plex Media Server monitor](https://github.com/tautulli/tautulli)
 * [Tdarr Distributed Transcoding System](https://tdarr.io)
+* [Tdarr-Node distributed worker for Tdarr](https://docs.tdarr.io/docs/welcome/what/)
 * [TubeSync - YouTube PVR](https://github.com/meeb/tubesync)
 * [Watchtower Automatic container updater](https://github.com/containrrr/watchtower)
 
@@ -186,7 +187,16 @@ The log includes:
 
 ### Preset Stacks
 
-Mediabox2 also supports preset module lists for preselected installs:
+Mediabox2 supports multiple configuration profiles in the installer:
+
+- **Full (everything)**: selects all available service modules
+- **Standard Plex stack**: preselected Plex-focused stack
+- **Standard Jellyfin stack**: preselected Jellyfin-focused stack
+- **Minimal (Plex only)**: installs only Plex
+- **Minimal (Jellyfin only)**: installs only Jellyfin
+- **Custom**: opens the full checklist to choose services manually
+
+Preset module lists used by the standard profiles:
 
 - **DEFAULT_PLEX**: `plex sonarr radarr prowlarr delugevpn overseerr tautulli homer watchtower portainer`
 - **DEFAULT_JELLYFIN**: `jellyfin sonarr radarr prowlarr delugevpn overseerr homer watchtower portainer`
@@ -220,12 +230,12 @@ lib/
   services.sh         # Module discovery, selection UI, dependency resolution
   compose.sh          # Docker-compose assembly & management
   postinstall.sh      # Post-deploy configuration hooks
-modules/              # 35 YAML files — one per service (compose fragments + metadata)
+modules/              # Primary service modules (+ optional variant fragments such as Plex GPU compose variants)
 ovpn/                 # Bundled PIA OpenVPN configuration files
 homer_assets/         # Homer dashboard templates and icons
 ```
 
-Each service is a self-contained module in `modules/`. During install, selected modules are merged into a single `docker-compose.yml` via `yq`.
+Each service is a self-contained module in `modules/` (files identified by a `# module:` metadata header). Some additional files are variant compose fragments (for example, Plex GPU variants) used conditionally during compose assembly. During install, selected modules are merged into a single `docker-compose.yml` via `yq`.
 
 ---
 
