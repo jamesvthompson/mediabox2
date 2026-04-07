@@ -44,10 +44,8 @@ assemble_compose() {
         fi
 
         local merged="$temp_dir/merged_${count}.yml"
-        yq eval-all 'select(fileIndex == 0) *+ select(fileIndex == 1)' \
-            "$current" "$clean_file" > "$merged" 2>/dev/null
-
-        if [ $? -eq 0 ] && [ -s "$merged" ]; then
+        if yq eval-all 'select(fileIndex == 0) *+ select(fileIndex == 1)' \
+            "$current" "$clean_file" > "$merged" 2>/dev/null && [ -s "$merged" ]; then
             current="$merged"
             count=$((count + 1))
         else

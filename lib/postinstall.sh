@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # postinstall.sh - Post-deploy configuration hooks
 
+escape_sed_replacement() {
+    printf '%s' "$1" | sed -e 's/[\/&\\]/\\&/g'
+}
+
 # ========================================
 # Main Post-Install Runner
 # ========================================
@@ -94,10 +98,14 @@ configure_nzbget() {
     docker stop nzbget >/dev/null 2>&1 || true
 
     if [ -n "${DAEMON_USER:-}" ]; then
-        sed -i "s/ControlUsername=nzbget/ControlUsername=${DAEMON_USER}/g" "$config_file"
+        local escaped_user
+        escaped_user=$(escape_sed_replacement "${DAEMON_USER}")
+        sed -i "s/ControlUsername=nzbget/ControlUsername=${escaped_user}/g" "$config_file"
     fi
     if [ -n "${DAEMON_PASS:-}" ]; then
-        sed -i "s/ControlPassword=tegbzn6789/ControlPassword=${DAEMON_PASS}/g" "$config_file"
+        local escaped_pass
+        escaped_pass=$(escape_sed_replacement "${DAEMON_PASS}")
+        sed -i "s/ControlPassword=tegbzn6789/ControlPassword=${escaped_pass}/g" "$config_file"
     fi
     sed -i 's/{MainDir}\/intermediate/{MainDir}\/incomplete/g' "$config_file"
 
@@ -136,8 +144,16 @@ configure_homer() {
     # Substitute variables in mediaboxconfig.html
     if [ -f "$homer_dir/mediaboxconfig.html" ]; then
         sed -i "s/locip/${IP_ADDRESS}/g" "$homer_dir/mediaboxconfig.html"
-        [ -n "${DAEMON_USER:-}" ] && sed -i "s/daemonun/${DAEMON_USER}/g" "$homer_dir/mediaboxconfig.html"
-        [ -n "${DAEMON_PASS:-}" ] && sed -i "s/daemonpass/${DAEMON_PASS}/g" "$homer_dir/mediaboxconfig.html"
+        if [ -n "${DAEMON_USER:-}" ]; then
+            local escaped_user
+            escaped_user=$(escape_sed_replacement "${DAEMON_USER}")
+            sed -i "s/daemonun/${escaped_user}/g" "$homer_dir/mediaboxconfig.html"
+        fi
+        if [ -n "${DAEMON_PASS:-}" ]; then
+            local escaped_pass
+            escaped_pass=$(escape_sed_replacement "${DAEMON_PASS}")
+            sed -i "s/daemonpass/${escaped_pass}/g" "$homer_dir/mediaboxconfig.html"
+        fi
     fi
 
     # Create sanitized env display (no PIA creds)
