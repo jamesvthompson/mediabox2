@@ -15,8 +15,8 @@ CATEGORIES=(
 
 # Service presets
 # Keep values as plain strings and normalize before use.
-DEFAULT_PLEX="plex sonarr radarr jackett delugevpn ombi tautulli homer watchtower portainer"
-DEFAULT_JELLYFIN="jellyfin sonarr radarr jackett delugevpn ombi homer watchtower portainer"
+DEFAULT_PLEX="plex sonarr radarr prowlarr delugevpn overseerr tautulli homer watchtower portainer"
+DEFAULT_JELLYFIN="jellyfin sonarr radarr prowlarr delugevpn overseerr homer watchtower portainer"
 
 # ========================================
 # Module Discovery
@@ -80,8 +80,10 @@ show_service_selector() {
     SELECTED_SERVICES=""
     local checklist_args=()
 
-    # Add "SELECT ALL" as first option
+    # Add quick actions as first options
     checklist_args+=("SELECT_ALL" "── Select/Deselect All Services ──" "OFF")
+    checklist_args+=("DEFAULT_PLEX" "── Default Plex Stack ──" "OFF")
+    checklist_args+=("DEFAULT_JELLYFIN" "── Default Jellyfin Stack ──" "OFF")
 
     # Group modules by category
     for category in "${CATEGORIES[@]}"; do
@@ -118,13 +120,24 @@ show_service_selector() {
     # Remove quotes from whiptail output
     selected=$(echo "$selected" | tr -d '"')
 
-    # Handle SELECT_ALL
+    # Handle quick actions
     if echo "$selected" | grep -qw "SELECT_ALL"; then
         selected=""
         for mod in "${ALL_MODULES[@]}"; do
             selected+="$mod "
         done
+    else
+        if echo "$selected" | grep -qw "DEFAULT_PLEX"; then
+            selected="$selected $DEFAULT_PLEX"
+        fi
+        if echo "$selected" | grep -qw "DEFAULT_JELLYFIN"; then
+            selected="$selected $DEFAULT_JELLYFIN"
+        fi
     fi
+
+    # Strip quick-action tags and deduplicate while preserving order
+    selected=$(echo "$selected" | sed -E 's/\bSELECT_ALL\b//g; s/\bDEFAULT_PLEX\b//g; s/\bDEFAULT_JELLYFIN\b//g')
+    selected=$(for mod in $selected; do echo "$mod"; done | awk '!seen[$0]++')
 
     SELECTED_SERVICES=$(normalize_whitespace "$selected")
 }
