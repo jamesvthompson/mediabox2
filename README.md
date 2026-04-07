@@ -164,6 +164,15 @@ cd mediabox2
 6. **Plex GPU Transcoding** — optional GPU acceleration: none (software only), Intel GPU (Arc/QSV), or NVIDIA GPU (NVENC) (only if Plex is selected)
 7. **Daemon credentials** — username/password for Deluge daemon and NZBGet access (only if either is selected)
 
+### Preset Stacks
+
+Mediabox2 also supports preset module lists for preselected installs:
+
+- **DEFAULT_PLEX**: `plex sonarr radarr jackett delugevpn ombi tautulli homer watchtower portainer`
+- **DEFAULT_JELLYFIN**: `jellyfin sonarr radarr jackett delugevpn ombi homer watchtower portainer`
+
+`tautulli` is intentionally included only in the Plex preset, since it is Plex-focused.
+
 ---
 
 ## Available Services

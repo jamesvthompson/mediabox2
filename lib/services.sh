@@ -13,6 +13,11 @@ CATEGORIES=(
     "Utilities"
 )
 
+# Service presets
+# Keep values as plain strings and normalize before use.
+DEFAULT_PLEX="plex sonarr radarr jackett delugevpn ombi tautulli homer watchtower portainer"
+DEFAULT_JELLYFIN="jellyfin sonarr radarr jackett delugevpn ombi homer watchtower portainer"
+
 # ========================================
 # Module Discovery
 # ========================================
@@ -28,6 +33,18 @@ parse_module_meta() {
 # Discover all modules in the modules/ directory
 # Populates associative arrays for module metadata
 declare -A MODULE_DESC MODULE_CAT MODULE_DEPS MODULE_PORT MODULE_CONFIG
+
+normalize_whitespace() {
+    echo "$1" | xargs
+}
+
+expand_service_preset() {
+    case "$1" in
+        DEFAULT_PLEX) echo "$DEFAULT_PLEX" ;;
+        DEFAULT_JELLYFIN) echo "$DEFAULT_JELLYFIN" ;;
+        *) echo "$1" ;;
+    esac
+}
 
 discover_modules() {
     local modules_dir="$BASE_DIR/modules"
@@ -58,6 +75,8 @@ discover_modules() {
 # with associative arrays. Caller must NOT use $(...) to capture output.
 show_service_selector() {
     local preselected="${1:-}"
+    preselected=$(expand_service_preset "$preselected")
+    preselected=$(normalize_whitespace "$preselected")
     SELECTED_SERVICES=""
     local checklist_args=()
 
@@ -107,7 +126,7 @@ show_service_selector() {
         done
     fi
 
-    SELECTED_SERVICES=$(echo "$selected" | xargs)
+    SELECTED_SERVICES=$(normalize_whitespace "$selected")
 }
 
 # ========================================
