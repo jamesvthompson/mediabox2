@@ -3,6 +3,9 @@
 
 set -euo pipefail
 
+DEBUG_MODE=${DEBUG_MODE:-false}
+LOG_FILE=""
+
 # Terminal dimensions for whiptail
 WT_HEIGHT=${WT_HEIGHT:-24}
 WT_WIDTH=${WT_WIDTH:-78}
@@ -22,18 +25,69 @@ NC='\033[0m' # No Color
 
 log_info() {
     printf "${GREEN}[INFO]${NC} %s\n" "$*"
+    log_to_file "INFO" "$*"
 }
 
 log_warn() {
     printf "${YELLOW}[WARN]${NC} %s\n" "$*"
+    log_to_file "WARN" "$*"
 }
 
 log_error() {
     printf "${RED}[ERROR]${NC} %s\n" "$*" >&2
+    log_to_file "ERROR" "$*"
 }
 
 log_step() {
     printf "${BLUE}[STEP]${NC} %s\n" "$*"
+    log_to_file "STEP" "$*"
+}
+
+log_debug() {
+    if [ "${DEBUG_MODE:-false}" = "true" ]; then
+        printf "[DEBUG] %s\n" "$*"
+    fi
+    log_to_file "DEBUG" "$*"
+}
+
+log_decision() {
+    log_info "Decision: $*"
+}
+
+log_to_file() {
+    local level="$1"
+    shift
+    if [ -n "${LOG_FILE:-}" ]; then
+        printf '%s [%s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$level" "$*" >> "$LOG_FILE"
+    fi
+}
+
+init_logging() {
+    local base_dir="$1"
+    LOG_FILE="$base_dir/install.log"
+    touch "$LOG_FILE"
+    log_info "Logging initialized: $LOG_FILE"
+    if [ "${DEBUG_MODE:-false}" = "true" ]; then
+        log_info "Debug mode enabled."
+    fi
+}
+
+run_and_log() {
+    local cmd_display="$1"
+    shift
+    log_debug "Running command: $cmd_display"
+    local output
+    if output=$("$@" 2>&1); then
+        [ -n "$output" ] && printf "%s\n" "$output"
+        [ -n "$output" ] && log_to_file "CMD" "$output"
+        return 0
+    else
+        local exit_code=$?
+        [ -n "$output" ] && printf "%s\n" "$output" >&2
+        [ -n "$output" ] && log_to_file "CMD" "$output"
+        log_error "Command failed (exit $exit_code): $cmd_display"
+        return $exit_code
+    fi
 }
 
 # ========================================
