@@ -157,7 +157,7 @@ cd mediabox2
 ## What You'll Be Asked During New Install
 
 1. **Media directory paths** — where your downloads, TV, movies, music, and misc files live (defaults provided)
-2. **Which services to install** — a categorized checklist; select any combination or all
+2. **Which services to install** — a categorized checklist; select any combination, all services, or a preset stack (`Default Plex Stack` / `Default Jellyfin Stack`)
 3. **PIA VPN credentials** — only if DelugeVPN is selected
 4. **VPN server selection** — choose from bundled PIA OpenVPN configs
 5. **Plex release type** — `public`, `latest`, or `plexpass` (only if Plex is selected)
@@ -168,8 +168,8 @@ cd mediabox2
 
 Mediabox2 also supports preset module lists for preselected installs:
 
-- **DEFAULT_PLEX**: `plex sonarr radarr jackett delugevpn ombi tautulli homer watchtower portainer`
-- **DEFAULT_JELLYFIN**: `jellyfin sonarr radarr jackett delugevpn ombi homer watchtower portainer`
+- **DEFAULT_PLEX**: `plex sonarr radarr prowlarr delugevpn overseerr tautulli homer watchtower portainer`
+- **DEFAULT_JELLYFIN**: `jellyfin sonarr radarr prowlarr delugevpn overseerr homer watchtower portainer`
 
 `tautulli` is intentionally included only in the Plex preset, since it is Plex-focused.
 
