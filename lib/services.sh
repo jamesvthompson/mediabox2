@@ -81,7 +81,7 @@ choose_services_with_profile() {
 
     local profile
     profile=$(whiptail_radiolist "Configuration Profile" \
-        "Choose a configuration profile.\n\nStandard Plex: plex + sonarr + radarr + prowlarr + delugevpn + overseerr + tautulli + homer + watchtower + portainer\nStandard Jellyfin: jellyfin + sonarr + radarr + prowlarr + delugevpn + overseerr + homer + watchtower + portainer" \
+        "Choose a configuration profile.\n\nStandard Plex: plex, sonarr, radarr, prowlarr, delugevpn, overseerr, tautulli, homer, watchtower, portainer\nStandard Jellyfin: jellyfin, sonarr, radarr, prowlarr, delugevpn, overseerr, homer, watchtower, portainer" \
         "full"              "Full (everything)"                              "OFF" \
         "standard_plex"     "Standard Plex stack"                            "ON" \
         "standard_jellyfin" "Standard Jellyfin stack"                        "OFF" \
