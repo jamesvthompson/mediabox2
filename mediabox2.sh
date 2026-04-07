@@ -129,7 +129,7 @@ do_update() {
     load_state
     load_existing_config
 
-    whiptail_msgbox "Update" "This will pull the latest images for all installed services and restart them.\n\nPress OK to continue."
+    whiptail_msgbox "Update Containers" "This will re-pull the latest images for all installed services, then relaunch the stack.\n\nPress OK to continue."
 
     compose_pull
     compose_up
@@ -137,8 +137,76 @@ do_update() {
     # Update state
     save_state "$INSTALLED_SERVICES"
 
-    whiptail_msgbox "Update Complete" "All containers have been updated to their latest images."
+    whiptail_msgbox "Update Complete" "All containers were re-pulled and relaunched with the latest images."
     log_info "Update complete!"
+}
+
+do_update_directories() {
+    if ! is_installed; then
+        whiptail_msgbox "Not Installed" "No existing installation found.\nPlease run 'New Install' first."
+        return 1
+    fi
+
+    log_step "Updating media directories..."
+
+    load_state
+    load_existing_config
+    detect_system_info
+
+    if ! prompt_media_dirs; then
+        log_info "Directory update cancelled."
+        return 1
+    fi
+
+    create_media_dirs
+    generate_env_file
+    assemble_compose "$INSTALLED_SERVICES"
+    compose_up
+
+    whiptail_msgbox "Directories Updated" "Media directories were updated and the stack was relaunched."
+    log_info "Directory update complete!"
+}
+
+do_update_credentials() {
+    if ! is_installed; then
+        whiptail_msgbox "Not Installed" "No existing installation found.\nPlease run 'New Install' first."
+        return 1
+    fi
+
+    log_step "Updating service credentials..."
+
+    load_state
+    load_existing_config
+    detect_system_info
+
+    local needs_prompt=false
+
+    if echo "$INSTALLED_SERVICES" | grep -qw "delugevpn"; then
+        PIAUNAME=$(whiptail_input "PIA VPN Credentials" \
+            "Enter your PIA (Private Internet Access) username:" \
+            "${PIAUNAME:-}") || return 1
+
+        PIAPASS=$(whiptail_password "PIA VPN Credentials" \
+            "Enter your PIA password:") || return 1
+        needs_prompt=true
+    fi
+
+    if echo "$INSTALLED_SERVICES" | grep -qw "delugevpn\|nzbget"; then
+        prompt_daemon_credentials || return 1
+        needs_prompt=true
+    fi
+
+    if [ "$needs_prompt" = false ]; then
+        whiptail_msgbox "No Credential Targets" "No installed services currently use managed credentials."
+        return 1
+    fi
+
+    generate_env_file
+    compose_up
+    run_postinstall_hooks "$INSTALLED_SERVICES"
+
+    whiptail_msgbox "Credentials Updated" "Credentials were updated and applicable services were refreshed."
+    log_info "Credential update complete!"
 }
 
 do_relaunch() {
@@ -311,8 +379,10 @@ main_menu() {
         local choice
         choice=$(whiptail_menu "Mediabox2 Installer" \
             "new_install"  "New Install" \
-            "update"       "Update Existing Install" \
-            "relaunch"     "Relaunch Existing Stack" \
+            "update"       "Re-pull + relaunch containers" \
+            "update_dirs"  "Update media directories" \
+            "update_creds" "Update service credentials" \
+            "relaunch"     "Relaunch containers only" \
             "reconfigure"  "Reconfigure Services" \
             "status"       "Status" \
             "reset"        "Reset" \
@@ -321,6 +391,8 @@ main_menu() {
         case "$choice" in
             new_install)  do_new_install || true ;;
             update)       do_update || true ;;
+            update_dirs)  do_update_directories || true ;;
+            update_creds) do_update_credentials || true ;;
             relaunch)     do_relaunch || true ;;
             reconfigure)  do_reconfigure || true ;;
             status)       do_status || true ;;
