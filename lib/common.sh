@@ -76,18 +76,26 @@ run_and_log() {
     local cmd_display="$1"
     shift
     log_debug "Running command: $cmd_display"
-    local output
-    if output=$("$@" 2>&1); then
-        [ -n "$output" ] && printf "%s\n" "$output"
-        [ -n "$output" ] && log_to_file "CMD" "$output"
-        return 0
-    else
-        local exit_code=$?
-        [ -n "$output" ] && printf "%s\n" "$output" >&2
-        [ -n "$output" ] && log_to_file "CMD" "$output"
-        log_error "Command failed (exit $exit_code): $cmd_display"
-        return $exit_code
+    local tmp_output
+    tmp_output=$(mktemp)
+
+    # Stream command output live to preserve compose progress while still logging.
+    set +e
+    "$@" 2>&1 | tee "$tmp_output"
+    local exit_code=${PIPESTATUS[0]}
+    set -e
+
+    if [ -s "$tmp_output" ]; then
+        while IFS= read -r line; do
+            log_to_file "CMD" "$line"
+        done < "$tmp_output"
     fi
+    rm -f "$tmp_output"
+
+    if [ $exit_code -ne 0 ]; then
+        log_error "Command failed (exit $exit_code): $cmd_display"
+    fi
+    return $exit_code
 }
 
 # ========================================
