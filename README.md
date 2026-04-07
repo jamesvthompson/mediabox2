@@ -131,7 +131,7 @@ cd mediabox2
 │        Mediabox2 Installer      │
 │                                 │
 │  1. New Install                 │
-│  2. Re-pull + relaunch containers│
+│  2. Re-pull+relaunch containers │
 │  3. Update media directories    │
 │  4. Update service credentials  │
 │  5. Relaunch containers only    │
