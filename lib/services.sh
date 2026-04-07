@@ -108,10 +108,24 @@ show_service_selector() {
         done
     done
 
+    local checklist_height="$WT_HEIGHT"
+    local checklist_width="$WT_WIDTH"
+    local checklist_list_height="$WT_LIST_HEIGHT"
+
+    # Keep enough room for title/prompt/buttons so the list never overlaps
+    # the top of the dialog on smaller terminals.
+    local max_list_height=$((checklist_height - 8))
+    if [ "$max_list_height" -lt 5 ]; then
+        max_list_height=5
+    fi
+    if [ "$checklist_list_height" -gt "$max_list_height" ]; then
+        checklist_list_height="$max_list_height"
+    fi
+
     local selected
     selected=$(whiptail --title "Service Selection" \
         --checklist "Select services (SPACE toggle, TAB buttons, ENTER confirm)." \
-        "$WT_HEIGHT" "$WT_WIDTH" "$WT_LIST_HEIGHT" "${checklist_args[@]}" 3>&1 1>&2 2>&3) || return 1
+        "$checklist_height" "$checklist_width" "$checklist_list_height" "${checklist_args[@]}" 3>&1 1>&2 2>&3) || return 1
 
     # Remove quotes from whiptail output
     selected=$(echo "$selected" | tr -d '"')
