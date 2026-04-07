@@ -55,18 +55,22 @@ do_new_install() {
 
         case "$existing_action" in
             update_dirs)
+                log_decision "Existing install action selected: update media directories."
                 do_update_directories
                 return $?
                 ;;
             update_creds)
+                log_decision "Existing install action selected: update service credentials."
                 do_update_credentials
                 return $?
                 ;;
             reconfigure)
+                log_decision "Existing install action selected: reconfigure services."
                 do_reconfigure
                 return $?
                 ;;
             fresh_install)
+                log_decision "Existing install action selected: fresh install."
                 if ! whiptail_yesno "Confirm Fresh Install" \
                     "WARNING: Fresh install will reset the existing stack and generated files before running a new install.\n\nThis can remove current container setup and, if you choose volume removal in the next step, permanently delete service data.\n\nDo you want to continue?"; then
                     log_info "Fresh install cancelled."
@@ -108,6 +112,7 @@ do_new_install() {
     # 5. Resolve dependencies
     resolve_dependencies "$selected"
     selected="$RESOLVED_SERVICES"
+    log_decision "Services selected for installation: $selected"
 
     # 6. Prompt for service-specific config
     prompt_service_config "$selected"
@@ -307,6 +312,7 @@ do_reconfigure() {
 
     resolve_dependencies "$selected"
     selected="$RESOLVED_SERVICES"
+    log_decision "Services selected for reconfigure: $selected"
 
     # Determine added and removed services
     local added="" removed=""
@@ -348,6 +354,7 @@ do_reconfigure() {
         log_info "Reconfiguration cancelled."
         return 1
     fi
+    log_decision "Reconfiguration confirmed."
 
     # Create dirs for new services
     if [ -n "$added" ]; then
@@ -410,6 +417,7 @@ do_reset() {
     if whiptail_yesno "Remove Volumes?" "Do you also want to remove Docker volumes?\n\n(This will delete all container data)"; then
         remove_volumes=true
     fi
+    log_decision "Reset remove volumes: $remove_volumes"
 
     load_existing_config
 
@@ -465,7 +473,35 @@ main_menu() {
 # Entry Point
 # ========================================
 
+parse_args() {
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --debug)
+                DEBUG_MODE=true
+                ;;
+            -h|--help)
+                cat <<EOF
+Usage: ./mediabox2.sh [--debug]
+
+Options:
+  --debug    Enable verbose debug logging to console and install.log
+  -h, --help Show this help message
+EOF
+                exit 0
+                ;;
+            *)
+                echo "Unknown argument: $1" >&2
+                echo "Use --help for usage." >&2
+                exit 1
+                ;;
+        esac
+        shift
+    done
+}
+
 main() {
+    parse_args "$@"
+    init_logging "$BASE_DIR"
     check_prerequisites
     main_menu
     log_info "Goodbye!"

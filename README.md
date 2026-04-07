@@ -122,6 +122,26 @@ cd mediabox2
 ./mediabox2.sh
 ```
 
+### Optional: run in debug mode
+```bash
+./mediabox2.sh --debug
+```
+
+Debug mode increases troubleshooting visibility and writes additional debug entries.
+
+### Installer log file
+
+Mediabox2 now writes a central log file at:
+
+```bash
+./install.log
+```
+
+The log includes:
+- installer decisions (for example, selected actions/services)
+- failures and error messages
+- docker compose command output (`up`, `pull`, `down`, etc.)
+
 ---
 
 ## Main Menu
