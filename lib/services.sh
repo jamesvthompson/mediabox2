@@ -13,10 +13,12 @@ CATEGORIES=(
     "Utilities"
 )
 
-# Service presets
+# Config profiles
 # Keep values as plain strings and normalize before use.
 DEFAULT_PLEX="plex sonarr radarr prowlarr delugevpn overseerr tautulli homer watchtower portainer"
 DEFAULT_JELLYFIN="jellyfin sonarr radarr prowlarr delugevpn overseerr homer watchtower portainer"
+PROFILE_MINIMAL_PLEX="plex"
+PROFILE_MINIMAL_JELLYFIN="jellyfin"
 
 # ========================================
 # Module Discovery
@@ -42,6 +44,8 @@ expand_service_preset() {
     case "$1" in
         DEFAULT_PLEX) echo "$DEFAULT_PLEX" ;;
         DEFAULT_JELLYFIN) echo "$DEFAULT_JELLYFIN" ;;
+        PROFILE_MINIMAL_PLEX) echo "$PROFILE_MINIMAL_PLEX" ;;
+        PROFILE_MINIMAL_JELLYFIN) echo "$PROFILE_MINIMAL_JELLYFIN" ;;
         *) echo "$1" ;;
     esac
 }
@@ -71,6 +75,49 @@ discover_modules() {
 # Service Selection UI
 # ========================================
 
+choose_services_with_profile() {
+    local custom_preselected="${1:-}"
+    SELECTED_SERVICES=""
+
+    local profile
+    profile=$(whiptail_radiolist "Configuration Profile" \
+        "Choose a configuration profile.\n\nStandard Plex: plex + sonarr + radarr + prowlarr + delugevpn + overseerr + tautulli + homer + watchtower + portainer\nStandard Jellyfin: jellyfin + sonarr + radarr + prowlarr + delugevpn + overseerr + homer + watchtower + portainer\n\nCustom lets you select individual services on the next screen." \
+        "full"              "Full (everything)"        "OFF" \
+        "standard_plex"     "Standard Plex stack"      "ON" \
+        "standard_jellyfin" "Standard Jellyfin stack"  "OFF" \
+        "minimal_plex"      "Minimal (Plex only)"      "OFF" \
+        "minimal_jellyfin"  "Minimal (Jellyfin only)"  "OFF" \
+        "custom"            "Custom"                   "OFF") || return 1
+
+    case "$profile" in
+        minimal_plex)
+            SELECTED_SERVICES=$(normalize_whitespace "$PROFILE_MINIMAL_PLEX")
+            ;;
+        minimal_jellyfin)
+            SELECTED_SERVICES=$(normalize_whitespace "$PROFILE_MINIMAL_JELLYFIN")
+            ;;
+        standard_plex)
+            SELECTED_SERVICES=$(normalize_whitespace "$DEFAULT_PLEX")
+            ;;
+        standard_jellyfin)
+            SELECTED_SERVICES=$(normalize_whitespace "$DEFAULT_JELLYFIN")
+            ;;
+        full)
+            local all_selected=""
+            for mod in "${ALL_MODULES[@]}"; do
+                all_selected+="$mod "
+            done
+            SELECTED_SERVICES=$(normalize_whitespace "$all_selected")
+            ;;
+        custom)
+            show_service_selector "$custom_preselected" || return 1
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
 # Sets global SELECTED_SERVICES variable (not stdout) to avoid subshell issues
 # with associative arrays. Caller must NOT use $(...) to capture output.
 show_service_selector() {
@@ -79,11 +126,6 @@ show_service_selector() {
     preselected=$(normalize_whitespace "$preselected")
     SELECTED_SERVICES=""
     local checklist_args=()
-
-    # Add quick actions as first options
-    checklist_args+=("SELECT_ALL" "Toggle all services" "OFF")
-    checklist_args+=("DEFAULT_PLEX" "Apply default Plex stack" "OFF")
-    checklist_args+=("DEFAULT_JELLYFIN" "Apply default Jellyfin stack" "OFF")
 
     # Group modules by category
     for category in "${CATEGORIES[@]}"; do
@@ -130,23 +172,7 @@ show_service_selector() {
     # Remove quotes from whiptail output
     selected=$(echo "$selected" | tr -d '"')
 
-    # Handle quick actions
-    if echo "$selected" | grep -qw "SELECT_ALL"; then
-        selected=""
-        for mod in "${ALL_MODULES[@]}"; do
-            selected+="$mod "
-        done
-    else
-        if echo "$selected" | grep -qw "DEFAULT_PLEX"; then
-            selected="$selected $DEFAULT_PLEX"
-        fi
-        if echo "$selected" | grep -qw "DEFAULT_JELLYFIN"; then
-            selected="$selected $DEFAULT_JELLYFIN"
-        fi
-    fi
-
-    # Strip quick-action tags and deduplicate while preserving order
-    selected=$(echo "$selected" | sed -E 's/\bSELECT_ALL\b//g; s/\bDEFAULT_PLEX\b//g; s/\bDEFAULT_JELLYFIN\b//g')
+    # Deduplicate while preserving order
     selected=$(for mod in $selected; do echo "$mod"; done | awk '!seen[$0]++')
 
     SELECTED_SERVICES=$(normalize_whitespace "$selected")
