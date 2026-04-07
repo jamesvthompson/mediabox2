@@ -26,6 +26,65 @@ source "$BASE_DIR/lib/postinstall.sh"
 # ========================================
 
 do_new_install() {
+    if is_installed; then
+        load_state || true
+        load_existing_config || true
+
+        local running_count
+        running_count=$(cd "$BASE_DIR" && docker compose ps -q 2>/dev/null | wc -l || echo 0)
+
+        local stack_status_msg="An existing Mediabox2 installation was detected."
+        if [ "${running_count:-0}" -gt 0 ]; then
+            stack_status_msg+="\n\nCurrent stack status: RUNNING"
+        else
+            stack_status_msg+="\n\nCurrent stack status: INSTALLED (not currently running)"
+        fi
+
+        stack_status_msg+="\n\nChoose what you want to do:"
+
+        local existing_action
+        existing_action=$(whiptail_radiolist "Existing Installation Found" \
+            "$stack_status_msg" \
+            "update_dirs"  "Update media directories only"               "ON" \
+            "update_creds" "Update service credentials only"             "OFF" \
+            "reconfigure"  "Reconfigure installed services"              "OFF" \
+            "fresh_install" "Fresh install (reset stack then reinstall)" "OFF") || {
+            log_info "New install cancelled from existing-installation prompt."
+            return 1
+        }
+
+        case "$existing_action" in
+            update_dirs)
+                do_update_directories
+                return $?
+                ;;
+            update_creds)
+                do_update_credentials
+                return $?
+                ;;
+            reconfigure)
+                do_reconfigure
+                return $?
+                ;;
+            fresh_install)
+                if ! whiptail_yesno "Confirm Fresh Install" \
+                    "WARNING: Fresh install will reset the existing stack and generated files before running a new install.\n\nThis can remove current container setup and, if you choose volume removal in the next step, permanently delete service data.\n\nDo you want to continue?"; then
+                    log_info "Fresh install cancelled."
+                    return 1
+                fi
+
+                do_reset || {
+                    log_error "Fresh install aborted because reset did not complete."
+                    return 1
+                }
+                ;;
+            *)
+                log_info "No valid action selected. Returning to main menu."
+                return 1
+                ;;
+        esac
+    fi
+
     log_step "Starting new installation..."
 
     # 1. Detect system info
