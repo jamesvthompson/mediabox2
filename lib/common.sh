@@ -132,9 +132,18 @@ whiptail_menu() {
 
 whiptail_checklist() {
     local title="$1"
-    shift
+    local prompt="${2:-}"
+    shift 2
     # Remaining args are tag/description/status triples
-    whiptail --title "$title" --checklist "" "$WT_HEIGHT" "$WT_WIDTH" "$WT_LIST_HEIGHT" "$@" 3>&1 1>&2 2>&3
+    local checklist_list_height="$WT_LIST_HEIGHT"
+    local max_list_height=$((WT_HEIGHT - 9))
+    if [ "$max_list_height" -lt 5 ]; then
+        max_list_height=5
+    fi
+    if [ "$checklist_list_height" -gt "$max_list_height" ]; then
+        checklist_list_height="$max_list_height"
+    fi
+    whiptail --title "$title" --checklist "$prompt" "$WT_HEIGHT" "$WT_WIDTH" "$checklist_list_height" "$@" 3>&1 1>&2 2>&3
 }
 
 whiptail_input() {
@@ -173,7 +182,16 @@ whiptail_radiolist() {
     local title="$1"
     local prompt="$2"
     shift 2
-    whiptail --title "$title" --radiolist "$prompt" 28 "$WT_WIDTH" 18 "$@" 3>&1 1>&2 2>&3
+    local radiolist_height="$WT_HEIGHT"
+    local radiolist_list_height=18
+    local max_list_height=$((radiolist_height - 9))
+    if [ "$max_list_height" -lt 5 ]; then
+        max_list_height=5
+    fi
+    if [ "$radiolist_list_height" -gt "$max_list_height" ]; then
+        radiolist_list_height="$max_list_height"
+    fi
+    whiptail --title "$title" --radiolist "$prompt" "$radiolist_height" "$WT_WIDTH" "$radiolist_list_height" "$@" 3>&1 1>&2 2>&3
 }
 
 whiptail_textbox() {
