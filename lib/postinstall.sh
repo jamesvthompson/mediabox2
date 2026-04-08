@@ -172,7 +172,7 @@ _generate_homer_config() {
     # ── Static header ──────────────────────────────────────────
     cat <<HEADER
 ---
-title: "Mediabox2"
+title: "Mediabox v2.0"
 subtitle: "${HOSTNAME_VAL}"
 icon: "far fa-play-circle"
 
@@ -209,9 +209,9 @@ colors:
     link-hover: "#ffdd57"
 
 links:
-  - name: "Mediabox2"
+  - name: "Mediabox"
     icon: "fab fa-github"
-    url: "https://github.com/jamesvthompson/mediabox2"
+    url: "https://github.com/mediaboxstack/Mediabox"
     target: "_blank"
   - name: "Getting Started"
     icon: "fas fa-check-square"

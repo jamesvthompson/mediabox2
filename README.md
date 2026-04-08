@@ -1,6 +1,16 @@
-# Mediabox2
+# Mediabox v2.0
 
-Mediabox2 is a modular, menu-driven Docker media server installer using whiptail. An upgrade of [mediabox](https://github.com/jamesvthompson/mediabox) with service selection, modular architecture, and a polished terminal UI.
+Mediabox is a modular, menu-driven Docker media server installer using whiptail. It expands on the original [mediabox](https://github.com/tom472/mediabox) with service selection, modular architecture, and a polished terminal UI.
+
+
+## Attribution
+
+- Original script and project inspiration by **Tom Morgan** ([tom472](https://github.com/tom472)).
+- Original upstream project: https://github.com/tom472/mediabox
+
+Current maintained project URL: https://github.com/mediaboxstack/Mediabox
+
+---
 
 ## Components
 
@@ -110,29 +120,29 @@ sudo reboot
 
 ---
 
-## Using Mediabox2
+## Using Mediabox v2.0
 
-### 8) Clone Mediabox2
+### 8) Clone Mediabox v2.0
 ```bash
-git clone https://github.com/jamesvthompson/mediabox2.git
-cd mediabox2
+git clone https://github.com/mediaboxstack/Mediabox.git
+cd Mediabox
 ```
 
 ### 9) Run the installer
 ```bash
-./mediabox2.sh
+./mediabox.sh
 ```
 
 ### Optional: run in debug mode
 ```bash
-./mediabox2.sh --debug
+./mediabox.sh --debug
 ```
 
 Debug mode increases troubleshooting visibility and writes additional debug entries.
 
 ### Installer log file
 
-Mediabox2 now writes a central log file at:
+Mediabox v2.0 now writes a central log file at:
 
 ```bash
 ./install.log
@@ -149,7 +159,7 @@ The log includes:
 
 ```
 ┌──────────────────────────────────┐
-│        Mediabox2 Installer       │
+│      Mediabox v2.0 Installer     │
 │                                  │
 │  1. New Install                  │
 │  2. Re-pull + relaunch containers│
@@ -187,7 +197,7 @@ The log includes:
 
 ### Preset Stacks
 
-Mediabox2 supports multiple configuration profiles in the installer:
+Mediabox v2.0 supports multiple configuration profiles in the installer:
 
 - **Full (everything)**: selects all available service modules
 - **Standard Plex stack**: preselected Plex-focused stack
@@ -223,7 +233,7 @@ Preset module lists used by the standard profiles:
 ## Architecture
 
 ```
-mediabox2.sh          # Main entry point (menu system)
+mediabox.sh           # Main entry point (menu system)
 lib/
   common.sh           # Whiptail wrappers, logging, prerequisites
   config.sh           # System detection, config prompting, .env generation
@@ -257,7 +267,7 @@ THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESSED OR IMPLIED WARRANTIES, INCLU
 
 MIT License
 
-Copyright (c) 2025 Mediabox2
+Copyright (c) 2026 Mediabox
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

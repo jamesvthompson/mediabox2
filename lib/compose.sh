@@ -154,7 +154,7 @@ compose_status_formatted() {
     stopped=$(docker compose ps --status exited -q 2>/dev/null | wc -l)
     total=$((running + stopped))
 
-    local summary="Mediabox2 Status\n"
+    local summary="Mediabox v2.0 Status\n"
     summary+="========================\n"
     summary+="Total services: $total\n"
     summary+="Running: $running\n"

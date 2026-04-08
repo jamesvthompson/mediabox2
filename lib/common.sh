@@ -271,7 +271,7 @@ install_yq() {
 # Utility Functions
 # ========================================
 
-# Get the base directory of the mediabox2 installation
+# Get the base directory of the Mediabox installation
 get_base_dir() {
     cd "$(dirname "${BASH_SOURCE[1]}")" && pwd
 }
