@@ -3,11 +3,11 @@
 # category: Media Processing
 # depends: (none)
 # config_requires:
-# port: 8191
+# port: 8192
 # homer_group: get
 # homer_name: Byparr
 # homer_icon: assets/icons/byparr.png
-# homer_url: http://locip:8191
+# homer_url: http://locip:8192
 
 services:
   byparr:
@@ -16,4 +16,4 @@ services:
     restart: unless-stopped
     network_mode: "bridge"
     ports:
-      - '${IP_ADDRESS}:8191:8191'
+      - '${IP_ADDRESS}:8192:8191'

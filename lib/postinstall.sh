@@ -16,6 +16,7 @@ run_postinstall_hooks() {
     for mod in $selected; do
         case "$mod" in
             delugevpn)  configure_delugevpn ;;
+            qbittorrentvpn) configure_qbittorrentvpn ;;
             jackett)    configure_jackett ;;
             nzbget)     configure_nzbget ;;
             homer)      configure_homer "$selected" ;;
@@ -56,6 +57,56 @@ configure_delugevpn() {
     fi
 
     log_info "DelugeVPN configured."
+}
+
+# ========================================
+# qBittorrentVPN Configuration
+# ========================================
+
+configure_qbittorrentvpn() {
+    log_info "Configuring qBittorrentVPN..."
+
+    local config_file="$BASE_DIR/qbittorrentvpn/qBittorrent/config/qBittorrent.conf"
+
+    if ! wait_for_file "$config_file" 120; then
+        log_warn "qBittorrent config not found after 120s. Skipping configuration."
+        return
+    fi
+
+    # If a PBKDF2 password already exists, preserve it and point users to where it is managed.
+    if grep -q '^WebUI\\Password_PBKDF2=' "$config_file"; then
+        log_info "qBittorrent WebUI password already configured in: $config_file"
+        log_info "To change it, use qBittorrent WebUI (Tools > Options > Web UI) or edit WebUI\\\\Password_PBKDF2 in that file."
+        return
+    fi
+
+    if [ -z "${DAEMON_PASS:-}" ]; then
+        log_warn "No DAEMON_PASS supplied, qBittorrent password left unchanged."
+        log_info "You can set it later in $config_file (WebUI\\\\Password_PBKDF2)."
+        return
+    fi
+
+    docker stop qbittorrentvpn >/dev/null 2>&1 || true
+
+    local pass_ha1
+    pass_ha1=$(printf 'admin:qBittorrent:%s' "${DAEMON_PASS}" | md5sum | awk '{print $1}')
+
+    if grep -q '^WebUI\\Username=' "$config_file"; then
+        sed -i 's/^WebUI\\Username=.*/WebUI\\Username=admin/g' "$config_file"
+    else
+        sed -i '/^\[Preferences\]/a WebUI\\Username=admin' "$config_file"
+    fi
+
+    if grep -q '^WebUI\\Password_ha1=' "$config_file"; then
+        sed -i "s/^WebUI\\\\Password_ha1=.*/WebUI\\\\Password_ha1=@ByteArray(${pass_ha1})/g" "$config_file"
+    else
+        sed -i "/^\[Preferences\]/a WebUI\\\\Password_ha1=@ByteArray(${pass_ha1})" "$config_file"
+    fi
+
+    docker start qbittorrentvpn >/dev/null 2>&1 || true
+
+    log_info "qBittorrent WebUI credentials set to username 'admin' with the configured Mediabox daemon password."
+    log_info "Password location: $config_file (WebUI\\\\Password_PBKDF2 or legacy WebUI\\\\Password_ha1)."
 }
 
 # ========================================

@@ -249,7 +249,7 @@ The log includes:
 4. **VPN server selection** — choose from bundled PIA OpenVPN configs
 5. **Plex release type** — `public`, `latest`, or `plexpass` (only if Plex is selected)
 6. **Plex GPU Transcoding** — optional GPU acceleration: none (software only), Intel GPU (Arc/QSV), or NVIDIA GPU (NVENC) (only if Plex is selected)
-7. **Daemon credentials** — username/password for Deluge daemon and NZBGet access (only if either is selected)
+7. **Daemon credentials** — username/password for Deluge daemon and NZBGet access, and initial qBittorrent WebUI password bootstrap when not already configured (only if applicable services are selected)
 
 ### Preset Stacks
 
@@ -309,6 +309,7 @@ Each service is a self-contained module in `modules/` (files identified by a `# 
 
 - After install, access the Homer dashboard at `http://<your-ip>`. The dashboard displays only the services you selected during install, organized into categories: Get It (downloaders), Manage It (library managers), Monitor It (monitoring), and Watch It (media servers).
 - Portainer is available at `https://<your-ip>:9443` — set a password on first login
+- qBittorrentVPN WebUI credentials are stored in `qbittorrentvpn/qBittorrent/config/qBittorrent.conf` (`WebUI\\Password_PBKDF2` or legacy `WebUI\\Password_ha1`).
 - The `.env` file holds all your configuration. A timestamped backup is saved before any reset.
 - To add or remove services later, use **Reconfigure Services** from the main menu. The Homer dashboard automatically updates to reflect your new selection.
 - Cancelling any prompt safely returns you to the main menu
