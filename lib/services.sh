@@ -360,7 +360,8 @@ choose_custom_install_services() {
             "10" "Storage & File Management" \
             "11" "System & Infrastructure" \
             "12" "Review Selection" \
-            "13" "Back") || return 1
+            "13" "Install All" \
+            "14" "Back") || return 1
 
         case "$choice" in
             1) choose_category_services "media_servers" || true ;;
@@ -375,7 +376,11 @@ choose_custom_install_services() {
             10) choose_category_services "storage_file_management" || true ;;
             11) choose_category_services "system_infrastructure" || true ;;
             12) show_selection_review "Review Selection" ;;
-            13) return 0 ;;
+            13)
+                SELECTED_SERVICES=$(select_all_supported_modules)
+                whiptail_msgbox "Custom Install" "All supported modules selected."
+                ;;
+            14) return 2 ;;
         esac
     done
 }
@@ -405,8 +410,9 @@ choose_guided_install_services() {
             "10" "Storage & File Management" \
             "11" "System & Infrastructure" \
             "12" "Review Selection" \
-            "13" "Install" \
-            "14" "Back") || return 1
+            "13" "Install All" \
+            "14" "Install" \
+            "15" "Back") || return 1
 
         case "$choice" in
             1) choose_category_services "media_servers" || true ;;
@@ -421,10 +427,28 @@ choose_guided_install_services() {
             10) choose_category_services "storage_file_management" || true ;;
             11) choose_category_services "system_infrastructure" || true ;;
             12) show_selection_review "Guided Install - Review Selection" ;;
-            13) return 0 ;;
-            14) return 1 ;;
+            13)
+                SELECTED_SERVICES=$(select_all_supported_modules)
+                whiptail_msgbox "Guided Install" "All supported modules selected."
+                ;;
+            14) return 0 ;;
+            15) return 2 ;;
         esac
     done
+}
+
+select_all_supported_modules() {
+    local selected=""
+    local mod
+    for mod in "${ALL_MODULES[@]}"; do
+        if echo "$LEGACY_MODULES" | grep -qw "$mod"; then
+            continue
+        fi
+        selected="$selected $mod"
+    done
+    selected=$(remove_legacy_modules "$selected")
+    selected=$(enforce_single_dashboard_selection "$selected")
+    normalize_whitespace "$selected"
 }
 
 choose_new_install_services() {
@@ -441,15 +465,25 @@ choose_new_install_services() {
 
         case "$choice" in
             guided)
-                choose_guided_install_services || true
-                if [ -n "$SELECTED_SERVICES" ]; then
-                    return 0
+                if choose_guided_install_services; then
+                    [ -n "$SELECTED_SERVICES" ] && return 0
+                else
+                    local guided_status=$?
+                    if [ "$guided_status" -eq 2 ]; then
+                        continue
+                    fi
                 fi
                 ;;
             custom)
-                choose_custom_install_services || true
-                if whiptail_yesno "Custom Install" "Use current selection and continue to installation?"; then
-                    return 0
+                if choose_custom_install_services; then
+                    if whiptail_yesno "Custom Install" "Use current selection and continue to installation?"; then
+                        return 0
+                    fi
+                else
+                    local custom_status=$?
+                    if [ "$custom_status" -eq 2 ]; then
+                        continue
+                    fi
                 fi
                 ;;
             legacy)

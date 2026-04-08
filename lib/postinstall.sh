@@ -174,8 +174,17 @@ configure_dashy() {
 
     local dashy_dir="$BASE_DIR/dashy"
     local conf_file="$dashy_dir/conf.yml"
+    local assets_icons_dir="$BASE_DIR/homer_assets/icons"
+    local dashy_icons_dir="$dashy_dir/item-icons"
 
     mkdir -p "$dashy_dir"
+    mkdir -p "$dashy_icons_dir"
+
+    # Reuse Homer icon set for Dashy so both dashboards share the same assets.
+    if [ -d "$assets_icons_dir" ]; then
+        cp -r "$assets_icons_dir/"* "$dashy_icons_dir/" 2>/dev/null || true
+    fi
+
     _generate_dashy_config "$selected" > "$conf_file"
 
     log_info "Dashy dashboard configured."
@@ -336,6 +345,11 @@ HEADER
 
             [ -z "$homer_name" ] && continue
             [ -z "$homer_url" ] && continue
+
+            # Dashy local icon path (shared with Homer icons)
+            if [[ "$homer_icon" == assets/icons/* ]]; then
+                homer_icon="/item-icons/${homer_icon#assets/icons/}"
+            fi
 
             items+="    - title: ${homer_name}\n"
             items+="      icon: ${homer_icon}\n"
