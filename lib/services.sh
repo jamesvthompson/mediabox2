@@ -378,7 +378,8 @@ choose_custom_install_services() {
             12) show_selection_review "Review Selection" ;;
             13)
                 SELECTED_SERVICES=$(select_all_supported_modules)
-                whiptail_msgbox "Custom Install" "All supported modules selected."
+                whiptail_msgbox "Custom Install" "All supported modules selected. Continuing to installation."
+                return 0
                 ;;
             14) return 2 ;;
         esac
@@ -429,7 +430,8 @@ choose_guided_install_services() {
             12) show_selection_review "Guided Install - Review Selection" ;;
             13)
                 SELECTED_SERVICES=$(select_all_supported_modules)
-                whiptail_msgbox "Guided Install" "All supported modules selected."
+                whiptail_msgbox "Guided Install" "All supported modules selected. Continuing to installation."
+                return 0
                 ;;
             14) return 0 ;;
             15) return 2 ;;
