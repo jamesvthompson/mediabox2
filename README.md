@@ -140,6 +140,61 @@ cd Mediabox
 
 Debug mode increases troubleshooting visibility and writes additional debug entries.
 
+---
+
+## Legacy Migration Prep (safe archive path)
+
+If you are migrating from a legacy Mediabox install (commonly `~/mediabox`) to a fresh clone of this repo, use the prep script first.
+
+### Download and run
+
+```bash
+wget https://raw.githubusercontent.com/mediaboxstack/Mediabox/main/legacy-migration-prep.sh
+chmod +x legacy-migration-prep.sh
+./legacy-migration-prep.sh
+```
+
+### Common usage
+
+```bash
+# default legacy path: ~/mediabox
+./legacy-migration-prep.sh
+
+# custom legacy path
+./legacy-migration-prep.sh /path/to/legacy/install
+
+# checks only (no stop, no rename)
+./legacy-migration-prep.sh --check-only
+```
+
+### What the script does
+
+- Detects legacy install path (`~/mediabox` by default, or a custom positional path)
+- Runs compatibility checks (Docker, Compose command, daemon access, writable parent directory, core tools)
+- Detects known services from:
+  - `config/`, `appdata/`, and `data/` subdirectories
+  - compose service names
+  - running containers scoped by compose project label
+- Stops the old stack with Compose (`down`) when compose command + file are available
+- Safely archives the old install by renaming:
+  - `<install_dir>` → `<install_dir>.backup-<timestamp>`
+- Prints the backup path to use in import steps
+
+### What the script does NOT do
+
+- Does **not** delete data
+- Does **not** run any `docker prune`
+- Does **not** move media folders
+- Does **not** clone repositories
+
+### Recommended migration flow
+
+1. Run `legacy-migration-prep.sh`.
+2. Review compatibility check results and resolve any failures.
+3. Let the script stop the old stack and archive the old directory.
+4. Clone a fresh copy of this repo in your new target location.
+5. Import your legacy config/app database data from the printed backup path.
+
 ### Installer log file
 
 Mediabox v2.0 now writes a central log file at:
