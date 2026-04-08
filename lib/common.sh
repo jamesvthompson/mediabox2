@@ -127,7 +127,25 @@ whiptail_menu() {
     local title="$1"
     shift
     # Remaining args are tag/description pairs
-    whiptail --title "$title" --menu "" "$WT_HEIGHT" "$WT_WIDTH" "$WT_MENU_HEIGHT" "$@" 3>&1 1>&2 2>&3
+    local option_pairs=$(( $# / 2 ))
+    local menu_list_height="$WT_MENU_HEIGHT"
+    local max_list_height=$((WT_HEIGHT - 9))
+
+    if [ "$max_list_height" -lt 5 ]; then
+        max_list_height=5
+    fi
+
+    if [ "$menu_list_height" -gt "$max_list_height" ]; then
+        menu_list_height="$max_list_height"
+    fi
+
+    # When there are many options, allow the menu to display as many as possible
+    # and let whiptail provide scrolling for the rest.
+    if [ "$option_pairs" -gt "$menu_list_height" ]; then
+        menu_list_height="$max_list_height"
+    fi
+
+    whiptail --title "$title" --menu "" "$WT_HEIGHT" "$WT_WIDTH" "$menu_list_height" "$@" 3>&1 1>&2 2>&3
 }
 
 whiptail_checklist() {
