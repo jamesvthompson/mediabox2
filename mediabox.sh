@@ -27,66 +27,14 @@ source "$BASE_DIR/lib/postinstall.sh"
 
 do_new_install() {
     if is_installed; then
-        load_state || true
-        load_existing_config || true
-
-        local running_count
-        running_count=$(cd "$BASE_DIR" && docker compose ps -q 2>/dev/null | wc -l || echo 0)
-
-        local stack_status_msg="An existing Mediabox v2.0 installation was detected."
-        if [ "${running_count:-0}" -gt 0 ]; then
-            stack_status_msg+="\n\nCurrent stack status: RUNNING"
-        else
-            stack_status_msg+="\n\nCurrent stack status: INSTALLED (not currently running)"
+        if ! whiptail_yesno "Existing Installation Found" \
+            "An existing Mediabox installation was detected.\n\nStarting a new install will reset and redeploy the stack.\n\nContinue?"; then
+            return 1
         fi
-
-        stack_status_msg+="\n\nChoose what you want to do:"
-
-        local existing_action
-        existing_action=$(whiptail_radiolist "Existing Installation Found" \
-            "$stack_status_msg" \
-            "update_dirs"  "Update media directories only"               "ON" \
-            "update_creds" "Update service credentials only"             "OFF" \
-            "reconfigure"  "Reconfigure installed services"              "OFF" \
-            "fresh_install" "Fresh install (reset stack then reinstall)" "OFF") || {
-            log_info "New install cancelled from existing-installation prompt."
+        do_reset || {
+            log_error "Fresh install aborted because reset did not complete."
             return 1
         }
-
-        case "$existing_action" in
-            update_dirs)
-                log_decision "Existing install action selected: update media directories."
-                do_update_directories
-                return $?
-                ;;
-            update_creds)
-                log_decision "Existing install action selected: update service credentials."
-                do_update_credentials
-                return $?
-                ;;
-            reconfigure)
-                log_decision "Existing install action selected: reconfigure services."
-                do_reconfigure
-                return $?
-                ;;
-            fresh_install)
-                log_decision "Existing install action selected: fresh install."
-                if ! whiptail_yesno "Confirm Fresh Install" \
-                    "WARNING: Fresh install will reset the existing stack and generated files before running a new install.\n\nThis can remove current container setup and, if you choose volume removal in the next step, permanently delete service data.\n\nDo you want to continue?"; then
-                    log_info "Fresh install cancelled."
-                    return 1
-                fi
-
-                do_reset || {
-                    log_error "Fresh install aborted because reset did not complete."
-                    return 1
-                }
-                ;;
-            *)
-                log_info "No valid action selected. Returning to main menu."
-                return 1
-                ;;
-        esac
     fi
 
     log_step "Starting new installation..."
@@ -100,8 +48,8 @@ do_new_install() {
     # 3. Discover available modules
     discover_modules
 
-    # 4. Config profile + service selection (custom only)
-    choose_services_with_profile || { log_error "Service/profile selection cancelled."; return 1; }
+    # 4. New install path + shared service selection
+    choose_new_install_services || { log_error "Service selection cancelled."; return 1; }
     local selected="$SELECTED_SERVICES"
 
     if [ -z "$selected" ]; then
@@ -245,7 +193,7 @@ do_update_credentials() {
 
     local needs_prompt=false
 
-    if echo "$INSTALLED_SERVICES" | grep -qw "delugevpn"; then
+    if echo "$INSTALLED_SERVICES" | grep -Eqw "delugevpn|qbittorrentvpn"; then
         PIAUNAME=$(whiptail_input "PIA VPN Credentials" \
             "Enter your PIA (Private Internet Access) username:" \
             "${PIAUNAME:-}") || return 1
@@ -255,7 +203,7 @@ do_update_credentials() {
         needs_prompt=true
     fi
 
-    if echo "$INSTALLED_SERVICES" | grep -qw "delugevpn\|nzbget"; then
+    if echo "$INSTALLED_SERVICES" | grep -Eqw "delugevpn|nzbget|qbittorrentvpn|sabnzbd"; then
         prompt_daemon_credentials || return 1
         needs_prompt=true
     fi
@@ -301,20 +249,49 @@ do_reconfigure() {
     detect_system_info
     discover_modules
 
-    # Show profile selector first; custom selection pre-checks currently installed services
-    choose_services_with_profile "$INSTALLED_SERVICES" || { log_error "Reconfiguration cancelled."; return 1; }
-    local selected="$SELECTED_SERVICES"
+    while true; do
+        local action
+        action=$(whiptail_menu "Reconfigure Services" \
+            "add" "Add Services" \
+            "remove" "Remove Services" \
+            "replace" "Replace Services" \
+            "back" "Back") || return 1
+
+        case "$action" in
+            add)
+                SELECTED_SERVICES="$INSTALLED_SERVICES"
+                choose_custom_install_services || true
+                _apply_reconfigure_selection "$SELECTED_SERVICES" || true
+                load_state || true
+                ;;
+            remove)
+                SELECTED_SERVICES="$INSTALLED_SERVICES"
+                choose_custom_install_services || true
+                _apply_reconfigure_selection "$SELECTED_SERVICES" || true
+                load_state || true
+                ;;
+            replace)
+                _reconfigure_replace_services || true
+                load_state || true
+                ;;
+            back)
+                return 0
+                ;;
+        esac
+    done
+}
+
+_apply_reconfigure_selection() {
+    local selected="$1"
 
     if [ -z "$selected" ]; then
-        whiptail_msgbox "No Selection" "No services were selected. Returning to main menu."
+        whiptail_msgbox "No Selection" "No services were selected. Returning to menu."
         return 1
     fi
 
     resolve_dependencies "$selected"
     selected="$RESOLVED_SERVICES"
-    log_decision "Services selected for reconfigure: $selected"
 
-    # Determine added and removed services
     local added="" removed=""
     for svc in $selected; do
         if ! echo "$INSTALLED_SERVICES" | grep -qw "$svc"; then
@@ -327,61 +304,45 @@ do_reconfigure() {
         fi
     done
 
-    # Prompt for config of newly added services
     if [ -n "$added" ]; then
         prompt_service_config "$added"
     fi
 
-    # Confirm changes
     local summary="Reconfiguration Summary:\n\n"
-    if [ -n "$added" ]; then
-        summary+="Services to ADD:\n"
-        for svc in $added; do
-            summary+="  + ${MODULE_DESC[$svc]:-$svc}\n"
-        done
-    fi
-    if [ -n "$removed" ]; then
-        summary+="\nServices to REMOVE:\n"
-        for svc in $removed; do
-            summary+="  - ${MODULE_DESC[$svc]:-$svc}\n"
-        done
-    fi
-    if [ -z "$added" ] && [ -z "$removed" ]; then
-        summary+="No changes detected."
-    fi
+    [ -n "$added" ] && summary+="Add: $added\n"
+    [ -n "$removed" ] && summary+="Remove: $removed\n"
+    [ -z "$added" ] && [ -z "$removed" ] && summary+="No changes detected."
+    whiptail_yesno "Confirm Reconfiguration" "$summary" || return 1
 
-    if ! whiptail_yesno "Confirm Reconfiguration" "$summary"; then
-        log_info "Reconfiguration cancelled."
-        return 1
-    fi
-    log_decision "Reconfiguration confirmed."
-
-    # Create dirs for new services
-    if [ -n "$added" ]; then
-        create_service_dirs "$added"
-    fi
-
-    # Regenerate .env and docker-compose.yml
+    [ -n "$added" ] && create_service_dirs "$added"
     generate_env_file
     assemble_compose "$selected"
-
-    # Remove old services
-    if [ -n "$removed" ]; then
-        remove_services "$removed"
-    fi
-
-    # Launch updated stack
+    [ -n "$removed" ] && remove_services "$removed"
     compose_up
-
-    # Post-install for new services
-    if [ -n "$added" ]; then
-        run_postinstall_hooks "$added"
-    fi
-
+    [ -n "$added" ] && run_postinstall_hooks "$added"
     save_state "$selected"
-
     whiptail_msgbox "Reconfiguration Complete" "Services have been reconfigured successfully."
-    log_info "Reconfiguration complete!"
+}
+
+_reconfigure_replace_services() {
+    local choice
+    choice=$(whiptail_menu "Replace Services" \
+        "deluge_to_qbit" "Deluge VPN -> qBittorrent VPN" \
+        "homer_to_dashy" "Homer -> Dashy" \
+        "flare_to_byparr" "FlareSolverr -> Byparr" \
+        "ombi_to_overseerr" "Ombi -> Overseerr" \
+        "back" "Back") || return 1
+
+    local selected="$INSTALLED_SERVICES"
+    case "$choice" in
+        deluge_to_qbit) selected=$(echo " $selected " | sed 's/ delugevpn / qbittorrentvpn /g') ;;
+        homer_to_dashy) selected=$(echo " $selected " | sed 's/ homer / dashy /g') ;;
+        flare_to_byparr) selected=$(echo " $selected " | sed 's/ flaresolverr / byparr /g') ;;
+        ombi_to_overseerr) selected=$(echo " $selected " | sed 's/ ombi / overseerr /g') ;;
+        back) return 1 ;;
+    esac
+    selected=$(normalize_whitespace "$selected")
+    _apply_reconfigure_selection "$selected"
 }
 
 do_status() {

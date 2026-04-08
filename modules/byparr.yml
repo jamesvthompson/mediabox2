@@ -1,0 +1,19 @@
+# module: byparr
+# description: Byparr - Anti-bot bypass proxy
+# category: Media Processing
+# depends: (none)
+# config_requires:
+# port: 8192
+# homer_group: get
+# homer_name: Byparr
+# homer_icon: assets/icons/byparr.png
+# homer_url: http://locip:8192
+
+services:
+  byparr:
+    image: ghcr.io/thephaseless/byparr:latest
+    container_name: byparr
+    restart: unless-stopped
+    network_mode: "bridge"
+    ports:
+      - '${IP_ADDRESS}:8192:8192'

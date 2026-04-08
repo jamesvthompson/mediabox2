@@ -1,0 +1,21 @@
+# module: uptimekuma
+# description: Uptime Kuma - Service monitoring
+# category: System & Monitoring
+# depends: (none)
+# config_requires:
+# port: 3001
+# homer_group: monitor
+# homer_name: Uptime Kuma
+# homer_icon: assets/icons/uptimekuma.png
+# homer_url: http://locip:3001
+
+services:
+  uptimekuma:
+    image: louislam/uptime-kuma:1
+    container_name: uptimekuma
+    restart: unless-stopped
+    network_mode: "bridge"
+    ports:
+      - '${IP_ADDRESS}:3001:3001'
+    volumes:
+      - './uptimekuma:/app/data'
