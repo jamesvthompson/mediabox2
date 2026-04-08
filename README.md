@@ -171,6 +171,7 @@ chmod +x legacy-migration-prep.sh
 
 - Detects legacy install path (`~/mediabox` by default, or a custom positional path)
 - Runs compatibility checks (Docker, Compose command, daemon access, writable parent directory, core tools)
+- Verifies the target path is not the current Mediabox Git repo location (legacy safety check)
 - Detects known services from:
   - `config/`, `appdata/`, and `data/` subdirectories
   - compose service names
