@@ -24,12 +24,12 @@ NC='\033[0m' # No Color
 # ========================================
 
 log_info() {
-    printf "${GREEN}[INFO]${NC} %s\n" "$*"
+    printf "${GREEN}[INFO]${NC} %s\n" "$*" >&2
     log_to_file "INFO" "$*"
 }
 
 log_warn() {
-    printf "${YELLOW}[WARN]${NC} %s\n" "$*"
+    printf "${YELLOW}[WARN]${NC} %s\n" "$*" >&2
     log_to_file "WARN" "$*"
 }
 
@@ -39,7 +39,7 @@ log_error() {
 }
 
 log_step() {
-    printf "${BLUE}[STEP]${NC} %s\n" "$*"
+    printf "${BLUE}[STEP]${NC} %s\n" "$*" >&2
     log_to_file "STEP" "$*"
 }
 

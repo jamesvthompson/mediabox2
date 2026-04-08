@@ -19,6 +19,8 @@ services:
       - '${IP_ADDRESS}:8080:8080'
       - '${IP_ADDRESS}:6881:6881'
       - '${IP_ADDRESS}:6881:6881/udp'
+    cap_add:
+      - NET_ADMIN
     environment:
       - PUID=${PUID}
       - PGID=${PGID}
@@ -29,6 +31,8 @@ services:
       - VPN_PROV=pia
       - VPN_CLIENT=openvpn
       - VPN_REMOTE=${VPN_REMOTE}
+      - LAN_NETWORK=${CIDR_ADDRESS}
+      - NAME_SERVERS=84.200.69.80,37.235.1.174,1.1.1.1,37.235.1.177,84.200.70.40,1.0.0.1
     volumes:
       - './qbittorrentvpn:/config'
       - '${DLDIR}:/data'
