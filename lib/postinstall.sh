@@ -19,6 +19,7 @@ run_postinstall_hooks() {
             jackett)    configure_jackett ;;
             nzbget)     configure_nzbget ;;
             homer)      configure_homer "$selected" ;;
+            dashy)      configure_dashy "$selected" ;;
         esac
     done
 
@@ -163,6 +164,23 @@ configure_homer() {
     log_info "Homer dashboard configured."
 }
 
+# ========================================
+# Dashy Dashboard Configuration
+# ========================================
+
+configure_dashy() {
+    local selected="$1"
+    log_info "Configuring Dashy dashboard..."
+
+    local dashy_dir="$BASE_DIR/dashy"
+    local conf_file="$dashy_dir/conf.yml"
+
+    mkdir -p "$dashy_dir"
+    _generate_dashy_config "$selected" > "$conf_file"
+
+    log_info "Dashy dashboard configured."
+}
+
 # Generate Homer config.yml dynamically from selected modules.
 # Writes to stdout — caller redirects to file (not a subshell, so arrays are fine).
 _generate_homer_config() {
@@ -273,6 +291,61 @@ HEADER
         if [ -n "$items" ]; then
             echo "  - name: \"${GROUP_NAMES[$group]}\""
             echo "    icon: \"${GROUP_ICONS[$group]}\""
+            echo "    items:"
+            echo -e "$items"
+        fi
+    done
+}
+
+_generate_dashy_config() {
+    local selected="$1"
+    local modules_dir="$BASE_DIR/modules"
+
+    cat <<HEADER
+pageInfo:
+  title: Mediabox v2.0
+  description: Dynamic service dashboard
+  navLinks:
+    - title: Mediabox
+      path: https://github.com/mediaboxstack/Mediabox
+sections:
+HEADER
+
+    local groups="watch get manage monitor"
+    declare -A GROUP_NAMES=(
+        [watch]="Watch It"
+        [get]="Get It"
+        [manage]="Manage It"
+        [monitor]="Monitor It"
+    )
+
+    for group in $groups; do
+        local items=""
+        for mod in $selected; do
+            local mod_file="$modules_dir/${mod}.yml"
+            [ -f "$mod_file" ] || continue
+
+            local homer_group
+            homer_group=$(grep "^# homer_group:" "$mod_file" | sed 's/^# homer_group: *//' | head -1)
+            [ "$homer_group" = "$group" ] || continue
+
+            local homer_name homer_icon homer_url
+            homer_name=$(grep "^# homer_name:" "$mod_file" | sed 's/^# homer_name: *//' | head -1)
+            homer_icon=$(grep "^# homer_icon:" "$mod_file" | sed 's/^# homer_icon: *//' | head -1)
+            homer_url=$(grep "^# homer_url:" "$mod_file" | sed 's/^# homer_url: *//' | sed "s/locip/${IP_ADDRESS}/g" | head -1)
+
+            [ -z "$homer_name" ] && continue
+            [ -z "$homer_url" ] && continue
+
+            items+="    - title: ${homer_name}\n"
+            items+="      icon: ${homer_icon}\n"
+            items+="      url: ${homer_url}\n"
+            items+="      target: newtab\n"
+        done
+
+        if [ -n "$items" ]; then
+            echo "  - name: ${GROUP_NAMES[$group]}"
+            echo "    icon: fas fa-th-large"
             echo "    items:"
             echo -e "$items"
         fi

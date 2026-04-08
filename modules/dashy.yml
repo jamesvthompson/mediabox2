@@ -3,7 +3,7 @@
 # category: Utilities
 # depends: (none)
 # config_requires:
-# port: 4000
+# port: 80
 # homer_group:
 
 services:
@@ -13,6 +13,6 @@ services:
     restart: unless-stopped
     network_mode: "bridge"
     ports:
-      - '${IP_ADDRESS}:4000:8080'
+      - '${IP_ADDRESS}:80:8080'
     volumes:
       - './dashy:/app/user-data'
