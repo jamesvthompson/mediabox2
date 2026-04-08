@@ -117,6 +117,8 @@ do_new_install() {
     local completion_msg="Installation complete!\n\n"
     if echo "$selected" | grep -qw "homer"; then
         completion_msg+="Dashboard: http://${IP_ADDRESS}:80\n"
+    elif echo "$selected" | grep -qw "dashy"; then
+        completion_msg+="Dashboard: http://${IP_ADDRESS}:80\n"
     fi
     if echo "$selected" | grep -qw "portainer"; then
         completion_msg+="Portainer: https://${IP_ADDRESS}:9443\n"

@@ -18,6 +18,7 @@ INSTALL_CATEGORY_KEYS=(
 
 # One shared default selection state for guided and custom install flows.
 NEW_INSTALL_DEFAULTS="plex sonarr radarr prowlarr qbittorrentvpn sabnzbd overseerr dashy uptimekuma netdata dozzle byparr portainer watchtower"
+LEGACY_MODULES="couchpotato sickchill headphones jackett nzbget ombi"
 
 # ========================================
 # Module Discovery
@@ -37,6 +38,23 @@ declare -A MODULE_DESC MODULE_CAT MODULE_DEPS MODULE_PORT MODULE_CONFIG
 
 normalize_whitespace() {
     echo "$1" | xargs
+}
+
+remove_legacy_modules() {
+    local selected="$1"
+    for legacy_mod in $LEGACY_MODULES; do
+        selected=$(echo " $selected " | sed "s/ $legacy_mod / /g")
+    done
+    normalize_whitespace "$selected"
+}
+
+enforce_single_dashboard_selection() {
+    local selected="$1"
+    if echo "$selected" | grep -qw "dashy" && echo "$selected" | grep -qw "homer"; then
+        selected=$(echo " $selected " | sed "s/ homer / /g")
+        log_warn "Both Dashy and Homer were selected; keeping Dashy and removing Homer."
+    fi
+    normalize_whitespace "$selected"
 }
 
 discover_modules() {
@@ -123,6 +141,10 @@ show_service_selector() {
 
     # Deduplicate while preserving order
     selected=$(for mod in $selected; do echo "$mod"; done | awk '!seen[$0]++')
+    if [ "$preselected" = "ALL" ]; then
+        selected=$(remove_legacy_modules "$selected")
+    fi
+    selected=$(enforce_single_dashboard_selection "$selected")
 
     SELECTED_SERVICES=$(normalize_whitespace "$selected")
 }
@@ -468,6 +490,8 @@ resolve_dependencies() {
             done
         done
     done
+
+    RESOLVED_SERVICES=$(enforce_single_dashboard_selection "$RESOLVED_SERVICES")
 
     # Soft dependency warnings
     if echo "$RESOLVED_SERVICES" | grep -qw "tautulli" && ! echo "$RESOLVED_SERVICES" | grep -qw "plex"; then
