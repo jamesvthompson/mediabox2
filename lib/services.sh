@@ -17,7 +17,7 @@ INSTALL_CATEGORY_KEYS=(
 )
 
 # One shared default selection state for guided and custom install flows.
-NEW_INSTALL_DEFAULTS="plex sonarr radarr prowlarr qbittorrentvpn sabnzbd overseerr dashy uptimekuma netdata dozzle byparr"
+NEW_INSTALL_DEFAULTS="plex sonarr radarr prowlarr qbittorrentvpn sabnzbd overseerr dashy uptimekuma netdata dozzle byparr portainer watchtower"
 
 # ========================================
 # Module Discovery
@@ -270,11 +270,12 @@ choose_category_services() {
     done
 
     local selected_raw selected_clean
+    local shifted_prompt="\n$prompt"
     if is_single_select_category "$category_key"; then
-        selected_raw=$(whiptail_radiolist "$title" "$prompt" "${args[@]}") || return 1
+        selected_raw=$(whiptail_radiolist "$title" "$shifted_prompt" "${args[@]}") || return 1
         selected_clean="$selected_raw"
     else
-        selected_raw=$(whiptail --title "$title" --checklist "$prompt" "$WT_HEIGHT" "$WT_WIDTH" "$WT_LIST_HEIGHT" "${args[@]}" 3>&1 1>&2 2>&3) || return 1
+        selected_raw=$(whiptail_checklist "$title" "$shifted_prompt" "${args[@]}") || return 1
         selected_clean=$(echo "$selected_raw" | tr -d '"')
     fi
 
@@ -351,10 +352,19 @@ choose_custom_install_services() {
             9) choose_category_services "media_tools" || true ;;
             10) choose_category_services "storage_file_management" || true ;;
             11) choose_category_services "system_infrastructure" || true ;;
-            12) whiptail_msgbox "Review Selection" "$(build_selection_review)" ;;
+            12) show_selection_review "Review Selection" ;;
             13) return 0 ;;
         esac
     done
+}
+
+show_selection_review() {
+    local title="$1"
+    local review_file
+    review_file=$(mktemp)
+    build_selection_review > "$review_file"
+    whiptail_textbox "$title" "$review_file"
+    rm -f "$review_file"
 }
 
 choose_guided_install_services() {
@@ -388,7 +398,7 @@ choose_guided_install_services() {
             9) choose_category_services "media_tools" || true ;;
             10) choose_category_services "storage_file_management" || true ;;
             11) choose_category_services "system_infrastructure" || true ;;
-            12) whiptail_msgbox "Guided Install - Review Selection" "$(build_selection_review)" ;;
+            12) show_selection_review "Guided Install - Review Selection" ;;
             13) return 0 ;;
             14) return 1 ;;
         esac
