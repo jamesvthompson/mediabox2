@@ -1,0 +1,21 @@
+# module: jellyseerr
+# description: Jellyseerr - Request management for Jellyfin/Emby
+# category: Request Management
+# depends: (none)
+# config_requires:
+# port: 5056
+# homer_group: get
+# homer_name: Jellyseerr
+# homer_icon: assets/icons/jellyseerr.png
+# homer_url: http://locip:5056
+
+services:
+  jellyseerr:
+    image: fallenbagel/jellyseerr:latest
+    container_name: jellyseerr
+    restart: unless-stopped
+    network_mode: "bridge"
+    ports:
+      - '${IP_ADDRESS}:5056:5055'
+    volumes:
+      - './jellyseerr:/app/config'

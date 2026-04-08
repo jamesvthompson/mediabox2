@@ -133,16 +133,17 @@ prompt_vpn_config() {
         "Select a VPN server location for DelugeVPN.\nYour torrents will route through this server:" \
         "${servers[@]}") || return 1
 
-    # Copy VPN files to delugevpn config
-    local vpn_dest="$BASE_DIR/delugevpn/config/openvpn"
-    mkdir -p "$vpn_dest"
-    rm -f "$vpn_dest"/*.ovpn "$vpn_dest"/*.crt "$vpn_dest"/*.pem 2>/dev/null
-    cp "$ovpn_dir/${selected_server}.ovpn" "$vpn_dest/"
-    cp "$ovpn_dir"/*.crt "$vpn_dest/" 2>/dev/null || true
-    cp "$ovpn_dir"/*.pem "$vpn_dest/" 2>/dev/null || true
-
-    # Adjust cipher settings
-    echo "cipher aes-256-gcm" >> "$vpn_dest/${selected_server}.ovpn"
+    # Copy VPN files to client config directories
+    local vpn_dests=("$BASE_DIR/delugevpn/config/openvpn" "$BASE_DIR/qbittorrentvpn/openvpn")
+    local vpn_dest
+    for vpn_dest in "${vpn_dests[@]}"; do
+        mkdir -p "$vpn_dest"
+        rm -f "$vpn_dest"/*.ovpn "$vpn_dest"/*.crt "$vpn_dest"/*.pem 2>/dev/null || true
+        cp "$ovpn_dir/${selected_server}.ovpn" "$vpn_dest/"
+        cp "$ovpn_dir"/*.crt "$vpn_dest/" 2>/dev/null || true
+        cp "$ovpn_dir"/*.pem "$vpn_dest/" 2>/dev/null || true
+        echo "cipher aes-256-gcm" >> "$vpn_dest/${selected_server}.ovpn"
+    done
 
     VPN_REMOTE=$(grep "remote" "$ovpn_dir/${selected_server}.ovpn" | cut -d ' ' -f2 | head -1)
 
@@ -173,8 +174,8 @@ prompt_service_config() {
         PLEX_GPU="${PLEX_GPU:-none}"
     fi
 
-    # VPN config (only if DelugeVPN selected)
-    if echo "$selected_services" | grep -qw "delugevpn"; then
+    # VPN config (only if VPN torrent client selected)
+    if echo "$selected_services" | grep -Eqw "delugevpn|qbittorrentvpn"; then
         prompt_vpn_config
     else
         PIAUNAME="${PIAUNAME:-}"
@@ -182,8 +183,8 @@ prompt_service_config() {
         VPN_REMOTE="${VPN_REMOTE:-}"
     fi
 
-    # Daemon credentials (if DelugeVPN or NZBGet selected)
-    if echo "$selected_services" | grep -qw "delugevpn\|nzbget"; then
+    # Daemon credentials (legacy compat for DelugeVPN/NZBGet)
+    if echo "$selected_services" | grep -Eqw "delugevpn|nzbget|qbittorrentvpn|sabnzbd"; then
         prompt_daemon_credentials
     else
         DAEMON_USER="${DAEMON_USER:-}"

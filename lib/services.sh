@@ -1,24 +1,23 @@
 #!/usr/bin/env bash
 # services.sh - Module discovery, service selection UI, dependency resolution
 
-# Service categories in display order
-CATEGORIES=(
-    "Media Servers"
-    "Content Automation"
-    "Indexers"
-    "Download Clients"
-    "Request Management"
-    "Media Processing"
-    "System & Monitoring"
-    "Utilities"
+# Service categories in display order (guided/custom flows)
+INSTALL_CATEGORY_KEYS=(
+    "media_servers"
+    "library_management"
+    "indexers_search"
+    "download_clients"
+    "request_management"
+    "dashboard"
+    "monitoring"
+    "network_bypass"
+    "media_tools"
+    "storage_file_management"
+    "system_infrastructure"
 )
 
-# Config profiles
-# Keep values as plain strings and normalize before use.
-DEFAULT_PLEX="plex sonarr radarr prowlarr delugevpn overseerr tautulli homer watchtower portainer"
-DEFAULT_JELLYFIN="jellyfin sonarr radarr prowlarr delugevpn overseerr homer watchtower portainer"
-PROFILE_MINIMAL_PLEX="plex"
-PROFILE_MINIMAL_JELLYFIN="jellyfin"
+# One shared default selection state for guided and custom install flows.
+NEW_INSTALL_DEFAULTS="plex sonarr radarr prowlarr qbittorrentvpn sabnzbd overseerr dashy uptimekuma netdata dozzle byparr"
 
 # ========================================
 # Module Discovery
@@ -38,16 +37,6 @@ declare -A MODULE_DESC MODULE_CAT MODULE_DEPS MODULE_PORT MODULE_CONFIG
 
 normalize_whitespace() {
     echo "$1" | xargs
-}
-
-expand_service_preset() {
-    case "$1" in
-        DEFAULT_PLEX) echo "$DEFAULT_PLEX" ;;
-        DEFAULT_JELLYFIN) echo "$DEFAULT_JELLYFIN" ;;
-        PROFILE_MINIMAL_PLEX) echo "$PROFILE_MINIMAL_PLEX" ;;
-        PROFILE_MINIMAL_JELLYFIN) echo "$PROFILE_MINIMAL_JELLYFIN" ;;
-        *) echo "$1" ;;
-    esac
 }
 
 discover_modules() {
@@ -76,56 +65,13 @@ discover_modules() {
 # ========================================
 
 choose_services_with_profile() {
-    local custom_preselected="${1:-}"
-    SELECTED_SERVICES=""
-    local profile_list_height=10
-
-    local profile
-    profile=$(whiptail --title "Configuration Profile" --radiolist \
-        "Choose a configuration profile.\n\nStandard Plex: plex, sonarr, radarr, prowlarr, delugevpn, overseerr, tautulli, homer, watchtower, portainer\nStandard Jellyfin: jellyfin, sonarr, radarr, prowlarr, delugevpn, overseerr, homer, watchtower, portainer" \
-        "$WT_HEIGHT" "$WT_WIDTH" "$profile_list_height" \
-        "full"              "Full (everything)"                              "OFF" \
-        "standard_plex"     "Standard Plex stack"                            "ON" \
-        "standard_jellyfin" "Standard Jellyfin stack"                        "OFF" \
-        "minimal_plex"      "Minimal (Plex only)"                            "OFF" \
-        "minimal_jellyfin"  "Minimal (Jellyfin only)"                        "OFF" \
-        "custom"            "Custom (choose individual services next screen)" "OFF" \
-        3>&1 1>&2 2>&3) || return 1
-
-    case "$profile" in
-        minimal_plex)
-            SELECTED_SERVICES=$(normalize_whitespace "$PROFILE_MINIMAL_PLEX")
-            ;;
-        minimal_jellyfin)
-            SELECTED_SERVICES=$(normalize_whitespace "$PROFILE_MINIMAL_JELLYFIN")
-            ;;
-        standard_plex)
-            SELECTED_SERVICES=$(normalize_whitespace "$DEFAULT_PLEX")
-            ;;
-        standard_jellyfin)
-            SELECTED_SERVICES=$(normalize_whitespace "$DEFAULT_JELLYFIN")
-            ;;
-        full)
-            local all_selected=""
-            for mod in "${ALL_MODULES[@]}"; do
-                all_selected+="$mod "
-            done
-            SELECTED_SERVICES=$(normalize_whitespace "$all_selected")
-            ;;
-        custom)
-            show_service_selector "$custom_preselected" || return 1
-            ;;
-        *)
-            return 1
-            ;;
-    esac
+    choose_new_install_services "${1:-}"
 }
 
 # Sets global SELECTED_SERVICES variable (not stdout) to avoid subshell issues
 # with associative arrays. Caller must NOT use $(...) to capture output.
 show_service_selector() {
     local preselected="${1:-}"
-    preselected=$(expand_service_preset "$preselected")
     preselected=$(normalize_whitespace "$preselected")
     SELECTED_SERVICES=""
     local checklist_args=()
@@ -181,6 +127,309 @@ show_service_selector() {
     SELECTED_SERVICES=$(normalize_whitespace "$selected")
 }
 
+get_category_title() {
+    case "$1" in
+        media_servers) echo "Media Servers" ;;
+        library_management) echo "Library Management" ;;
+        indexers_search) echo "Indexers & Search" ;;
+        download_clients) echo "Download Clients" ;;
+        request_management) echo "Request Management" ;;
+        dashboard) echo "Dashboard" ;;
+        monitoring) echo "Monitoring" ;;
+        network_bypass) echo "Network & Bypass" ;;
+        media_tools) echo "Media Tools" ;;
+        storage_file_management) echo "Storage & File Management" ;;
+        system_infrastructure) echo "System & Infrastructure" ;;
+        *) echo "$1" ;;
+    esac
+}
+
+get_category_modules() {
+    case "$1" in
+        media_servers) echo "plex jellyfin emby" ;;
+        library_management) echo "sonarr radarr lidarr maintainerr couchpotato sickchill headphones" ;;
+        indexers_search) echo "prowlarr nzbhydra2 jackett" ;;
+        download_clients) echo "qbittorrentvpn delugevpn sabnzbd nzbget autobrr metube tubesync" ;;
+        request_management) echo "overseerr jellyseerr requestrr ombi" ;;
+        dashboard) echo "dashy homer none" ;;
+        monitoring) echo "uptimekuma netdata dozzle tautulli glances speedtest" ;;
+        network_bypass) echo "byparr flaresolverr" ;;
+        media_tools) echo "tdarr fileflows maintainerr" ;;
+        storage_file_management) echo "filebrowser duplicati minio sqlitebrowser" ;;
+        system_infrastructure) echo "portainer watchtower" ;;
+        *) echo "" ;;
+    esac
+}
+
+is_single_select_category() {
+    case "$1" in
+        media_servers|dashboard) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
+build_category_prompt() {
+    case "$1" in
+        media_servers) echo "Select media server:" ;;
+        library_management) echo "Select library managers:" ;;
+        indexers_search) echo "Select indexer tools:" ;;
+        download_clients) echo "Select download clients:" ;;
+        request_management) echo "Select request tools:" ;;
+        dashboard) echo "Select dashboard:" ;;
+        monitoring) echo "Select monitoring tools:" ;;
+        network_bypass) echo "Select anti-bot tools:" ;;
+        media_tools) echo "Optional media tools:" ;;
+        storage_file_management) echo "Optional tools:" ;;
+        system_infrastructure) echo "Optional system tools:" ;;
+        *) echo "Select services:" ;;
+    esac
+}
+
+get_module_label() {
+    case "$1" in
+        plex) echo "Plex - best apps, remote streaming" ;;
+        jellyfin) echo "Jellyfin - free, open source" ;;
+        emby) echo "Emby - similar to Plex (alt)" ;;
+        sonarr) echo "Sonarr - auto TV downloads" ;;
+        radarr) echo "Radarr - auto movies" ;;
+        lidarr) echo "Lidarr - auto music" ;;
+        maintainerr) echo "Maintainerr - removes unused media" ;;
+        couchpotato) echo "CouchPotato - movies (legacy)" ;;
+        sickchill) echo "SickChill - TV (legacy)" ;;
+        headphones) echo "Headphones - music (legacy)" ;;
+        prowlarr) echo "Prowlarr - syncs indexers to apps" ;;
+        nzbhydra2) echo "NZBHydra2 - advanced Usenet search" ;;
+        jackett) echo "Jackett - indexer proxy (legacy)" ;;
+        qbittorrentvpn) echo "qBittorrent VPN - fast, stable, recommended" ;;
+        delugevpn) echo "Deluge VPN - simple, lightweight torrent client (alt)" ;;
+        sabnzbd) echo "SABnzbd - best Usenet downloader" ;;
+        nzbget) echo "NZBGet - lightweight (legacy)" ;;
+        autobrr) echo "Autobrr - auto-grabs releases before indexers update" ;;
+        metube) echo "MeTube - download videos (manual)" ;;
+        tubesync) echo "TubeSync - auto YouTube downloads" ;;
+        overseerr) echo "Overseerr - best overall UI + automation" ;;
+        jellyseerr) echo "Jellyseerr - supports Jellyfin + Emby" ;;
+        requestrr) echo "Requestrr - Discord requests (limited)" ;;
+        ombi) echo "Ombi - older request system (legacy)" ;;
+        dashy) echo "Dashy - modern, widgets, dynamic" ;;
+        homer) echo "Homer - simple, lightweight" ;;
+        none) echo "None" ;;
+        uptimekuma) echo "Uptime Kuma - alerts when services go down" ;;
+        netdata) echo "Netdata - CPU, RAM, system stats" ;;
+        dozzle) echo "Dozzle - live container logs" ;;
+        tautulli) echo "Tautulli - Plex usage stats" ;;
+        glances) echo "Glances - simple system view (alt)" ;;
+        speedtest) echo "Speedtest - track internet speed" ;;
+        byparr) echo "Byparr - modern, lightweight bypass" ;;
+        flaresolverr) echo "FlareSolverr - fallback for some sites" ;;
+        tdarr) echo "Tdarr - auto converts media to save space and fix formats" ;;
+        fileflows) echo "FileFlows - automate media: convert, rename, organize (paid features)" ;;
+        filebrowser) echo "FileBrowser - manage files in browser" ;;
+        duplicati) echo "Duplicati - backups to cloud/local" ;;
+        minio) echo "MinIO - S3-compatible storage" ;;
+        sqlitebrowser) echo "SQLiteBrowser - view/edit databases" ;;
+        portainer) echo "Portainer - Docker management UI" ;;
+        watchtower) echo "Watchtower - auto update containers" ;;
+        *) echo "${MODULE_DESC[$1]:-$1}" ;;
+    esac
+}
+
+module_available() {
+    local mod="$1"
+    [ "$mod" = "none" ] && return 0
+    for existing in "${ALL_MODULES[@]}"; do
+        if [ "$existing" = "$mod" ]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+choose_category_services() {
+    local category_key="$1"
+    local title prompt modules
+    title="$(get_category_title "$category_key")"
+    prompt="$(build_category_prompt "$category_key")"
+    modules="$(get_category_modules "$category_key")"
+    local args=()
+    local mod status label
+
+    for mod in $modules; do
+        status="OFF"
+        if [ "$mod" != "none" ] && echo "$SELECTED_SERVICES" | grep -qw "$mod"; then
+            status="ON"
+        fi
+        if [ "$mod" = "none" ] && [ "$category_key" = "dashboard" ] && ! echo "$SELECTED_SERVICES" | grep -qw "dashy\|homer"; then
+            status="ON"
+        fi
+        label="$(get_module_label "$mod")"
+        if [ "$mod" != "none" ] && ! module_available "$mod"; then
+            label="$label (unavailable)"
+        fi
+        args+=("$mod" "$label" "$status")
+    done
+
+    local selected_raw selected_clean
+    if is_single_select_category "$category_key"; then
+        selected_raw=$(whiptail_radiolist "$title" "$prompt" "${args[@]}") || return 1
+        selected_clean="$selected_raw"
+    else
+        selected_raw=$(whiptail --title "$title" --checklist "$prompt" "$WT_HEIGHT" "$WT_WIDTH" "$WT_LIST_HEIGHT" "${args[@]}" 3>&1 1>&2 2>&3) || return 1
+        selected_clean=$(echo "$selected_raw" | tr -d '"')
+    fi
+
+    for mod in $modules; do
+        if [ "$mod" = "none" ]; then
+            continue
+        fi
+        SELECTED_SERVICES=$(echo " $SELECTED_SERVICES " | sed "s/ $mod / /g")
+    done
+    SELECTED_SERVICES=$(normalize_whitespace "$SELECTED_SERVICES")
+
+    if [ "$category_key" = "dashboard" ] && [ "$selected_clean" = "none" ]; then
+        return 0
+    fi
+
+    for mod in $selected_clean; do
+        [ "$mod" = "none" ] && continue
+        if module_available "$mod"; then
+            SELECTED_SERVICES=$(normalize_whitespace "$SELECTED_SERVICES $mod")
+        fi
+    done
+}
+
+build_selection_review() {
+    local review="Review your setup:\n\n"
+    local key title modules found
+    for key in "${INSTALL_CATEGORY_KEYS[@]}"; do
+        title=$(get_category_title "$key")
+        modules=$(get_category_modules "$key")
+        review+="$title:\n"
+        found=0
+        for mod in $modules; do
+            [ "$mod" = "none" ] && continue
+            if echo "$SELECTED_SERVICES" | grep -qw "$mod"; then
+                review+="- ${MODULE_DESC[$mod]:-$mod}\n"
+                found=1
+            fi
+        done
+        if [ "$found" -eq 0 ]; then
+            review+="- None\n"
+        fi
+        review+="\n"
+    done
+    echo -e "$review"
+}
+
+choose_custom_install_services() {
+    while true; do
+        local choice
+        choice=$(whiptail_menu "Custom Install" \
+            "1" "Media Servers" \
+            "2" "Library Management" \
+            "3" "Indexers & Search" \
+            "4" "Download Clients" \
+            "5" "Request Management" \
+            "6" "Dashboard" \
+            "7" "Monitoring" \
+            "8" "Network & Bypass" \
+            "9" "Media Tools" \
+            "10" "Storage & File Management" \
+            "11" "System & Infrastructure" \
+            "12" "Review Selection" \
+            "13" "Back") || return 1
+
+        case "$choice" in
+            1) choose_category_services "media_servers" || true ;;
+            2) choose_category_services "library_management" || true ;;
+            3) choose_category_services "indexers_search" || true ;;
+            4) choose_category_services "download_clients" || true ;;
+            5) choose_category_services "request_management" || true ;;
+            6) choose_category_services "dashboard" || true ;;
+            7) choose_category_services "monitoring" || true ;;
+            8) choose_category_services "network_bypass" || true ;;
+            9) choose_category_services "media_tools" || true ;;
+            10) choose_category_services "storage_file_management" || true ;;
+            11) choose_category_services "system_infrastructure" || true ;;
+            12) whiptail_msgbox "Review Selection" "$(build_selection_review)" ;;
+            13) return 0 ;;
+        esac
+    done
+}
+
+choose_guided_install_services() {
+    while true; do
+        local choice
+        choice=$(whiptail_menu "Guided Install" \
+            "1" "Media Servers" \
+            "2" "Library Management" \
+            "3" "Indexers & Search" \
+            "4" "Download Clients" \
+            "5" "Request Management" \
+            "6" "Dashboard" \
+            "7" "Monitoring" \
+            "8" "Network & Bypass" \
+            "9" "Media Tools" \
+            "10" "Storage & File Management" \
+            "11" "System & Infrastructure" \
+            "12" "Review Selection" \
+            "13" "Install" \
+            "14" "Back") || return 1
+
+        case "$choice" in
+            1) choose_category_services "media_servers" || true ;;
+            2) choose_category_services "library_management" || true ;;
+            3) choose_category_services "indexers_search" || true ;;
+            4) choose_category_services "download_clients" || true ;;
+            5) choose_category_services "request_management" || true ;;
+            6) choose_category_services "dashboard" || true ;;
+            7) choose_category_services "monitoring" || true ;;
+            8) choose_category_services "network_bypass" || true ;;
+            9) choose_category_services "media_tools" || true ;;
+            10) choose_category_services "storage_file_management" || true ;;
+            11) choose_category_services "system_infrastructure" || true ;;
+            12) whiptail_msgbox "Guided Install - Review Selection" "$(build_selection_review)" ;;
+            13) return 0 ;;
+            14) return 1 ;;
+        esac
+    done
+}
+
+choose_new_install_services() {
+    local preselected="${1:-$NEW_INSTALL_DEFAULTS}"
+    SELECTED_SERVICES=$(normalize_whitespace "$preselected")
+
+    while true; do
+        local choice
+        choice=$(whiptail_menu "New Install" \
+            "guided" "Guided Install" \
+            "custom" "Custom Install" \
+            "legacy" "Import Legacy Mediabox Install" \
+            "back" "Back") || return 1
+
+        case "$choice" in
+            guided)
+                choose_guided_install_services || true
+                if [ -n "$SELECTED_SERVICES" ]; then
+                    return 0
+                fi
+                ;;
+            custom)
+                choose_custom_install_services || true
+                if whiptail_yesno "Custom Install" "Use current selection and continue to installation?"; then
+                    return 0
+                fi
+                ;;
+            legacy)
+                whiptail_msgbox "Import Legacy Mediabox Install" "Legacy import is not available yet.\nThis will be added later."
+                ;;
+            back)
+                return 1
+                ;;
+        esac
+    done
+}
+
 # ========================================
 # Dependency Resolution
 # ========================================
@@ -231,6 +480,9 @@ create_service_dirs() {
                 ;;
             delugevpn)
                 mkdir -p "$BASE_DIR/delugevpn/config/openvpn"
+                ;;
+            qbittorrentvpn)
+                mkdir -p "$BASE_DIR/qbittorrentvpn/openvpn"
                 ;;
             duplicati)
                 mkdir -p "$BASE_DIR/duplicati/backups"

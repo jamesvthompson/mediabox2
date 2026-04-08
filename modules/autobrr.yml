@@ -1,0 +1,21 @@
+# module: autobrr
+# description: Autobrr - Release automation
+# category: Download Clients
+# depends: (none)
+# config_requires:
+# port: 7474
+# homer_group: get
+# homer_name: Autobrr
+# homer_icon: assets/icons/autobrr.png
+# homer_url: http://locip:7474
+
+services:
+  autobrr:
+    image: ghcr.io/autobrr/autobrr:latest
+    container_name: autobrr
+    restart: unless-stopped
+    network_mode: "bridge"
+    ports:
+      - '${IP_ADDRESS}:7474:7474'
+    volumes:
+      - './autobrr:/config'

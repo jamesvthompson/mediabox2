@@ -1,0 +1,18 @@
+# module: dashy
+# description: Dashy - Application dashboard
+# category: Utilities
+# depends: (none)
+# config_requires:
+# port: 4000
+# homer_group:
+
+services:
+  dashy:
+    image: lissy93/dashy:latest
+    container_name: dashy
+    restart: unless-stopped
+    network_mode: "bridge"
+    ports:
+      - '${IP_ADDRESS}:4000:8080'
+    volumes:
+      - './dashy:/app/user-data'

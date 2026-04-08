@@ -1,0 +1,26 @@
+# module: sabnzbd
+# description: SABnzbd - Usenet downloader
+# category: Download Clients
+# depends: (none)
+# config_requires:
+# port: 8085
+# homer_group: get
+# homer_name: SABnzbd
+# homer_icon: assets/icons/sabnzbd.png
+# homer_url: http://locip:8085
+
+services:
+  sabnzbd:
+    image: lscr.io/linuxserver/sabnzbd:latest
+    container_name: sabnzbd
+    restart: unless-stopped
+    network_mode: "bridge"
+    ports:
+      - '${IP_ADDRESS}:8085:8080'
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - './sabnzbd:/config'
+      - '${DLDIR}:/downloads'

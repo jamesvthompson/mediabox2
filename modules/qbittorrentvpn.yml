@@ -1,0 +1,34 @@
+# module: qbittorrentvpn
+# description: qBittorrent VPN - Torrent client with VPN
+# category: Download Clients
+# depends: (none)
+# config_requires: PIAUNAME,PIAPASS,VPN_REMOTE
+# port: 8080
+# homer_group: get
+# homer_name: qBittorrentVPN
+# homer_icon: assets/icons/qbittorrent.png
+# homer_url: http://locip:8080
+
+services:
+  qbittorrentvpn:
+    image: binhex/arch-qbittorrentvpn:latest
+    container_name: qbittorrentvpn
+    restart: unless-stopped
+    network_mode: "bridge"
+    ports:
+      - '${IP_ADDRESS}:8080:8080'
+      - '${IP_ADDRESS}:6881:6881'
+      - '${IP_ADDRESS}:6881:6881/udp'
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - VPN_ENABLED=yes
+      - VPN_USER=${PIAUNAME}
+      - VPN_PASS=${PIAPASS}
+      - VPN_PROV=pia
+      - VPN_CLIENT=openvpn
+      - VPN_REMOTE=${VPN_REMOTE}
+    volumes:
+      - './qbittorrentvpn:/config'
+      - '${DLDIR}:/data'
