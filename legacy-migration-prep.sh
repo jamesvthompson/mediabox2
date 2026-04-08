@@ -2,7 +2,7 @@
 set -euo pipefail
 
 SCRIPT_NAME="legacy-migration-prep.sh"
-SCRIPT_VERSION="1.1.0"
+SCRIPT_VERSION="1.1.1"
 
 C_RESET='\033[0m'
 C_INFO='\033[1;34m'
@@ -22,6 +22,7 @@ COMPOSE_FILE=""
 PROJECT_NAME=""
 IDENTITY_SCORE=0
 IDENTITY_MAX=100
+CURRENT_REPO_TOPLEVEL=""
 
 PASS_COUNT=0
 WARN_COUNT=0
@@ -132,6 +133,15 @@ PY
   esac
 }
 
+get_git_toplevel() {
+  local p="$1"
+  if ! command -v git >/dev/null 2>&1; then
+    return 0
+  fi
+
+  git -C "$p" rev-parse --show-toplevel 2>/dev/null || true
+}
+
 is_known_service() {
   local name="$1"
   for s in "${KNOWN_SERVICES[@]}"; do
@@ -222,6 +232,27 @@ run_compatibility_checks() {
   fi
 
   check_core_tools
+}
+
+check_not_current_version_dir() {
+  local target_git_root
+  target_git_root="$(get_git_toplevel "$INSTALL_DIR_RESOLVED")"
+  if [[ -z "$target_git_root" ]]; then
+    record_ok "Target install directory is not inside a Git repository"
+    return
+  fi
+
+  local target_git_root_resolved
+  target_git_root_resolved="$(resolve_path "$target_git_root")"
+  record_ok "Target Git repository detected: $target_git_root_resolved"
+
+  if [[ -n "$CURRENT_REPO_TOPLEVEL" && "$target_git_root_resolved" == "$CURRENT_REPO_TOPLEVEL" ]]; then
+    record_fail "Target path is inside the current Mediabox repo. Provide a legacy install path instead."
+    print_summary
+    exit 1
+  fi
+
+  record_ok "Target path is not the current repo location (legacy path check passed)"
 }
 
 detect_project_name() {
@@ -404,9 +435,14 @@ main() {
     INSTALL_DIR="$HOME/mediabox"
   fi
   INSTALL_DIR_RESOLVED="$(resolve_path "$INSTALL_DIR")"
+  CURRENT_REPO_TOPLEVEL="$(get_git_toplevel "$(pwd)")"
+  if [[ -n "$CURRENT_REPO_TOPLEVEL" ]]; then
+    CURRENT_REPO_TOPLEVEL="$(resolve_path "$CURRENT_REPO_TOPLEVEL")"
+  fi
 
   log_info "$SCRIPT_NAME v$SCRIPT_VERSION"
   log_info "Target install dir: $INSTALL_DIR_RESOLVED"
+  [[ -n "$CURRENT_REPO_TOPLEVEL" ]] && log_info "Current repo dir: $CURRENT_REPO_TOPLEVEL"
 
   if [[ ! -d "$INSTALL_DIR_RESOLVED" ]]; then
     record_fail "Install directory does not exist: $INSTALL_DIR_RESOLVED"
@@ -415,6 +451,7 @@ main() {
   fi
 
   run_compatibility_checks
+  check_not_current_version_dir
   find_compose_file "$INSTALL_DIR_RESOLVED"
   detect_project_name
 
